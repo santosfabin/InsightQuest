@@ -45,8 +45,8 @@ def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None, 
     """
     Preenche valores ausentes de forma inteligente, ignorando as colunas alvo,
     e retorna os metadados da imputação.
-    - Todos os cálculos (média, mediana, quartis) ignoram números negativos.
-    - Todos os números negativos são substituídos junto com nulos, zeros e outliers.
+    - Em colunas CATEGÓRICAS, substitui nulos, decimais e TODOS os números negativos pela moda.
+    - Em colunas NUMÉRICAS, cálculos ignoram negativos, e todos os negativos são substituídos.
     """
     df_tratado = df.copy()
     colunas_info = {'colunas_numericas': [], 'colunas_categoricas': [], 'colunas_detalhes': {}}
@@ -60,53 +60,57 @@ def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None, 
             continue
 
         print(f"--- Processando a coluna: '{coluna}' ---")
-        # Substitui -1 por NaN para padronizar valores nulos
         df_tratado[coluna].replace(-1, np.nan, inplace=True)
         
         is_numeric = pd.api.types.is_numeric_dtype(df_tratado[coluna])
         num_unicos = df_tratado[coluna].nunique()
 
         if (not is_numeric or num_unicos < 10) or (coluna in force_categorical):
-            # Lógica para colunas CATEGÓRICAS (permanece a mesma)
+            # --- ATUALIZAÇÃO: Lógica para colunas CATEGÓRICAS ---
             colunas_info['colunas_categoricas'].append(coluna)
-            mascara = df_tratado[coluna].isnull() | df_tratado[coluna].apply(lambda x: isinstance(x, float) and x % 1 != 0)
-            if mascara.any():
-                moda = df_tratado[coluna][~mascara].mode()
+
+            # 1. CRIAR MÁSCARAS PARA TODOS OS VALORES INVÁLIDOS
+            nulos_mask = df_tratado[coluna].isnull()
+            decimais_mask = df_tratado[coluna].apply(lambda x: isinstance(x, float) and x % 1 != 0)
+            
+            # Nova máscara para números negativos.
+            # pd.to_numeric com errors='coerce' transforma não-números (ex: texto) em NaN,
+            # que não serão < 0, tornando o processo seguro para colunas mistas.
+            negativos_mask = pd.to_numeric(df_tratado[coluna], errors='coerce') < 0
+
+            # Combina todas as condições para substituição
+            mascara_substituir = nulos_mask | decimais_mask | negativos_mask
+
+            # 2. APLICAR A SUBSTITUIÇÃO PELA MODA
+            if mascara_substituir.any():
+                # Calcula a moda ignorando os valores que serão substituídos
+                moda = df_tratado[coluna][~mascara_substituir].mode()
                 if not moda.empty:
-                    df_tratado.loc[mascara, coluna] = moda[0]
+                    print(f"Substituindo {mascara_substituir.sum()} valores inválidos (nulos, decimais, negativos) pela moda: '{moda[0]}'")
+                    df_tratado.loc[mascara_substituir, coluna] = moda[0]
                     colunas_info['colunas_detalhes'][coluna] = 'moda'
         else:
-            # ATUALIZAÇÃO: Lógica para colunas NUMÉRICAS
+            # Lógica para colunas NUMÉRICAS (permanece a mesma da sua última versão)
             colunas_info['colunas_numericas'].append(coluna)
-
-            # 1. CRIAR UM CONJUNTO DE DADOS APENAS COM VALORES POSITIVOS PARA TODOS OS CÁLCULOS
             dados_para_calculo = df_tratado[coluna][df_tratado[coluna] > 0]
-
-            # Checagem de segurança: se não houver dados positivos, pule a coluna
             if dados_para_calculo.empty:
                 print(f"AVISO: Coluna '{coluna}' não possui dados positivos para cálculo. Pulando imputação.")
                 continue
 
-            # 2. CALCULAR QUARTIS E LIMITES DE OUTLIERS USANDO APENAS OS DADOS POSITIVOS
             q1, q3 = dados_para_calculo.quantile([0.25, 0.75])
             iqr = q3 - q1
             if iqr > 0:
                 lim_inf, lim_sup = q1 - 1.5 * iqr, q3 + 1.5 * iqr
-                # O limite inferior não deve ser negativo
                 lim_inf = max(0, lim_inf) 
                 outliers_mask = (df_tratado[coluna] < lim_inf) | (df_tratado[coluna] > lim_sup)
             else:
                 outliers_mask = pd.Series(False, index=df_tratado.index)
 
-            # 3. CRIAR MÁSCARAS PARA TODOS OS VALORES A SEREM SUBSTITUÍDOS
             nulos_mask = df_tratado[coluna].isnull()
             zeros_mask = df_tratado[coluna] == 0
-            negativos_mask = df_tratado[coluna] < 0 # Nova máscara para todos os negativos
-
-            # Máscara final combinando todas as condições
+            negativos_mask = df_tratado[coluna] < 0
             mascara_substituir = outliers_mask | nulos_mask | zeros_mask | negativos_mask
 
-            # 4. CALCULAR O VALOR DE PREENCHIMENTO (MÉDIA/MEDIANA) USANDO APENAS DADOS POSITIVOS
             skewness = dados_para_calculo.skew()
             if abs(skewness) < 0.5:
                 valor_preenchimento = dados_para_calculo.mean()
@@ -115,7 +119,6 @@ def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None, 
                 valor_preenchimento = dados_para_calculo.median()
                 colunas_info['colunas_detalhes'][coluna] = 'mediana'
             
-            # 5. APLICAR A SUBSTITUIÇÃO
             print(f"Substituindo {mascara_substituir.sum()} valores inválidos (nulos, zeros, negativos, outliers) por {valor_preenchimento:.2f}")
             df_tratado.loc[mascara_substituir, coluna] = valor_preenchimento
 

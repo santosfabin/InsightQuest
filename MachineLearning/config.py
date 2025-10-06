@@ -8,21 +8,23 @@ OUTPUT_DIR = 'output'
 # --- Configurações de Arquivos ---
 INPUT_FILE = 'JogadoresV1.xlsx'
 
-# Caminhos dos artefatos de saída
-PROCESSED_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_processada.xlsx')
+# ATUALIZAÇÃO: Caminhos mais descritivos para os arquivos de dados
+PRE_SCALING_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_pre_padronizacao.xlsx') # NOVO ARQUIVO
+POST_SCALING_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_pos_padronizacao_com_cluster.xlsx') # Renomeado para clareza
+
+# Caminhos dos artefatos
 IMPUTATION_INFO_JSON = os.path.join(OUTPUT_DIR, 'colunas_info.json')
 IMPUTERS_PKL_OUTPUT = os.path.join(OUTPUT_DIR, 'imputadores.pkl')
 STANDARD_SCALER_PKL = os.path.join(OUTPUT_DIR, 'standard_scaler.pkl')
-MINMAX_SCALER_PKL = os.path.join(OUTPUT_DIR, 'minmax_scaler.pkl') # Opcional, mantido para consistência
 KMEANS_MODEL_PKL = os.path.join(OUTPUT_DIR, 'kmeans_model.pkl')
 
-# ATUALIZAÇÃO: Caminhos específicos para cada modelo de regressão
+# Caminhos dos modelos de regressão
 LIGHTGBM_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_lightgbm.pkl')
 RANDOMFOREST_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_randomforest.pkl')
 SVR_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_svr.pkl')
 RIDGE_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_ridge.pkl')
 
-# ATUALIZAÇÃO: Arquivo para salvar os resultados de performance (RMSE)
+# Arquivo de resultados
 RMSE_RESULTS_JSON = os.path.join(OUTPUT_DIR, 'rmse_results.json')
 
 # --- Configurações de Colunas ---

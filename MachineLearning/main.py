@@ -41,6 +41,10 @@ def main():
         json.dump(info_imputacao, f, indent=4, ensure_ascii=False)
     print(f"Metadados da imputação salvos em '{config.IMPUTATION_INFO_JSON}'")
 
+    # ATUALIZAÇÃO: Salvar o DataFrame com os dados limpos e imputados ANTES da padronização
+    df_imputado.to_excel(config.PRE_SCALING_EXCEL_OUTPUT, index=False)
+    print(f"\nDataFrame pré-padronização salvo em '{config.PRE_SCALING_EXCEL_OUTPUT}'")
+
     # 2. Padronização
     colunas_numericas = info_imputacao['colunas_numericas']
     df_padronizado, _ = scaling.padronizar_dados_e_salvar_scaler(
@@ -54,19 +58,18 @@ def main():
         features_numericas_padronizadas, config.K_CLUSTERS, config.KMEANS_MODEL_PKL, config.RANDOM_STATE
     )
 
-    # 4. ATUALIZAÇÃO: Preparar DataFrames para Treinamento
-    # DataFrame PADRONIZADO com cluster
+    # 4. Preparar DataFrames para Treinamento
     df_scaled_final = df_padronizado.copy()
     df_scaled_final['Cluster'] = cluster_labels
     
-    # DataFrame NÃO PADRONIZADO com cluster
     df_unscaled_final = df_imputado.copy()
     df_unscaled_final['Cluster'] = cluster_labels
     
-    df_scaled_final.to_excel(config.PROCESSED_EXCEL_OUTPUT, index=False)
-    print(f"\nDataFrame final (padronizado) com clusters salvo em '{config.PROCESSED_EXCEL_OUTPUT}'")
+    # Salva a versão final padronizada e com o cluster
+    df_scaled_final.to_excel(config.POST_SCALING_EXCEL_OUTPUT, index=False)
+    print(f"DataFrame pós-padronização com clusters salvo em '{config.POST_SCALING_EXCEL_OUTPUT}'")
 
-    # 5. ATUALIZAÇÃO: Treinamento de Todos os Modelos
+    # 5. Treinamento de Todos os Modelos
     features_para_modelo = colunas_numericas + ['Cluster']
     
     trainer_config = {
