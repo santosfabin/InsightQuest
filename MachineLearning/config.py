@@ -10,14 +10,23 @@ INPUT_FILE = 'JogadoresV1.xlsx'
 
 # Caminhos dos artefatos de saída
 PROCESSED_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_processada.xlsx')
-MODEL_PKL_OUTPUT = os.path.join(OUTPUT_DIR, 'modelo_predicao_regressao.pkl') # Renomeado para clareza
 IMPUTATION_INFO_JSON = os.path.join(OUTPUT_DIR, 'colunas_info.json')
 IMPUTERS_PKL_OUTPUT = os.path.join(OUTPUT_DIR, 'imputadores.pkl')
 STANDARD_SCALER_PKL = os.path.join(OUTPUT_DIR, 'standard_scaler.pkl')
-MINMAX_SCALER_PKL = os.path.join(OUTPUT_DIR, 'minmax_scaler.pkl')
+MINMAX_SCALER_PKL = os.path.join(OUTPUT_DIR, 'minmax_scaler.pkl') # Opcional, mantido para consistência
 KMEANS_MODEL_PKL = os.path.join(OUTPUT_DIR, 'kmeans_model.pkl')
 
+# ATUALIZAÇÃO: Caminhos específicos para cada modelo de regressão
+LIGHTGBM_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_lightgbm.pkl')
+RANDOMFOREST_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_randomforest.pkl')
+SVR_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_svr.pkl')
+RIDGE_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_ridge.pkl')
+
+# ATUALIZAÇÃO: Arquivo para salvar os resultados de performance (RMSE)
+RMSE_RESULTS_JSON = os.path.join(OUTPUT_DIR, 'rmse_results.json')
+
 # --- Configurações de Colunas ---
+# ... (o resto do arquivo permanece o mesmo) ...
 COLUNAS_PARA_REMOVER = [
     'F0299 - Explicação Tempo', 'PTempoTotalExpl', 'T1199Expl',
     'T1205Expl', 'T0499 - Explicação Tempo', 'T1210Expl',
