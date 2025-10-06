@@ -39,19 +39,29 @@ def converter_colunas_numericas_texto(df: pd.DataFrame) -> pd.DataFrame:
             pass
     return df_convertido
 
-def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None) -> (pd.DataFrame, dict):
+
+def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None, target_cols: list = None) -> (pd.DataFrame, dict):
     """
-    Preenche valores ausentes de forma inteligente e retorna os metadados da imputação.
-    Retorna o DataFrame tratado e um dicionário com informações do processo.
+    Preenche valores ausentes de forma inteligente, ignorando as colunas alvo,
+    e retorna os metadados da imputação.
     """
     df_tratado = df.copy()
     colunas_info = {'colunas_numericas': [], 'colunas_categoricas': [], 'colunas_detalhes': {}}
     
-    # Se a lista não for passada, inicializa como uma lista vazia para evitar erros
+    # Inicializa listas vazias se não forem passadas para evitar erros
     if force_categorical is None:
         force_categorical = []
+    if target_cols is None:
+        target_cols = []
 
     for coluna in df_tratado.columns:
+        # ATUALIZAÇÃO: Se a coluna for uma das colunas target, pule todo o processo para ela.
+        if coluna in target_cols:
+            print(f"--- Ignorando a coluna target: '{coluna}' ---")
+            continue # Pula para a próxima iteração do loop
+
+        # O restante da lógica da função permanece o mesmo
+        print(f"--- Processando a coluna: '{coluna}' ---")
         df_tratado[coluna].replace(-1, np.nan, inplace=True)
         is_numeric = pd.api.types.is_numeric_dtype(df_tratado[coluna])
         num_unicos = df_tratado[coluna].nunique()
@@ -70,7 +80,6 @@ def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None) 
             colunas_info['colunas_numericas'].append(coluna)
             q1, q3 = df_tratado[coluna].quantile([0.25, 0.75])
             iqr = q3 - q1
-            # Evita erro se o IQR for zero
             if iqr > 0:
                 lim_inf, lim_sup = q1 - 1.5 * iqr, q3 + 1.5 * iqr
                 outliers_mask = (df_tratado[coluna] < lim_inf) | (df_tratado[coluna] > lim_sup)
@@ -90,8 +99,9 @@ def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None) 
                     colunas_info['colunas_detalhes'][coluna] = 'mediana'
                 df_tratado.loc[mascara, coluna] = valor
 
-    print("Imputação inteligente de dados concluída.")
+    print("\nImputação inteligente de dados concluída.")
     return df_tratado, colunas_info
+
 
 
 def hex_para_rgb(hex_code):

@@ -3,7 +3,7 @@
 import json
 import pandas as pd
 import numpy as np
-import os 
+import os
 
 # Importar módulos e configurações
 import config
@@ -16,7 +16,6 @@ def main():
     """
     Executa o pipeline completo de processamento de dados, clusterização e treinamento de modelo.
     """
-    
     os.makedirs(config.OUTPUT_DIR, exist_ok=True)
     print(f"Todos os arquivos de saída serão salvos no diretório: '{config.OUTPUT_DIR}/'")
 
@@ -33,7 +32,12 @@ def main():
     df_limpo = data_preprocessor.converter_data_para_timestamp(df_limpo, 'Data/Hora Último')
     df_limpo = data_preprocessor.converter_colunas_numericas_texto(df_limpo)
     
-    df_final, info_imputacao = data_preprocessor.imputar_dados_inteligente(df_limpo)
+    # ATUALIZAÇÃO: Passamos também a lista de colunas target para serem ignoradas na imputação.
+    df_final, info_imputacao = data_preprocessor.imputar_dados_inteligente(
+        df_limpo, 
+        force_categorical=config.FORCE_CATEGORICAL_COLS,
+        target_cols=config.TARGET_COLS
+    )
     
     # Salvar informações de imputação
     with open(config.IMPUTATION_INFO_JSON, 'w', encoding='utf-8') as f:
@@ -47,7 +51,6 @@ def main():
     print(f"\nAplicando KMeans com k={config.K_CLUSTERS} clusters...")
     df_clusterizado = clustering.aplicar_kmeans_e_visualizar(df_final, features_numericas, config.K_CLUSTERS)
     
-    # Salvar o DataFrame processado com os clusters
     df_clusterizado.to_excel(config.PROCESSED_EXCEL_OUTPUT, index=False)
     print(f"\nDataFrame final com clusters salvo em '{config.PROCESSED_EXCEL_OUTPUT}'")
 
