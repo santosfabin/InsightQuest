@@ -42,23 +42,27 @@ def treinar_avaliar_e_salvar_modelos(df: pd.DataFrame, features: list, targets: 
     
     return modelos_finais
 
-def criar_e_salvar_artefatos_preprocessamento(df, info_colunas, config):
+def criar_e_salvar_imputadores(df: pd.DataFrame, info_colunas: dict, config: dict):
     """
-    Cria e salva o Scaler e os Imputers com base nos dados de treino.
+    Cria e salva os objetos SimpleImputer com base nos dados de treino.
     """
-    colunas_numericas = info_colunas['colunas_numericas']
-    colunas_categoricas = info_colunas['colunas_categoricas']
-
-    # StandardScaler
-    scaler = StandardScaler().fit(df[colunas_numericas])
-    with open(config['SCALER_PKL_OUTPUT'], 'wb') as f:
-        pickle.dump(scaler, f)
-    print(f"StandardScaler salvo em '{config['SCALER_PKL_OUTPUT']}'")
-
-    # Imputers
+    colunas_numericas = [col for col in info_colunas['colunas_numericas'] if col in df.columns]
+    colunas_categoricas = [col for col in info_colunas['colunas_categoricas'] if col in df.columns]
+    
+    print("\n--- Salvando Artefatos de Imputação ---")
+    
+    # Imputer para dados numéricos, preenchendo com a MEDIANA
     imputer_mediana = SimpleImputer(strategy='median').fit(df[colunas_numericas])
+
+    # Imputer para dados categóricos, preenchendo com a MODA
     imputer_moda = SimpleImputer(strategy='most_frequent').fit(df[colunas_categoricas])
-    imputadores = {'mediana_num': imputer_mediana, 'moda_cat': imputer_moda}
-    with open(config['IMPUTERS_PKL_OUTPUT'], 'wb') as f:
-        pickle.dump(imputadores, f)
-    print(f"Imputadores salvos em '{config['IMPUTERS_PKL_OUTPUT']}'")
+
+    imputadores = {
+        'mediana_num': imputer_mediana,
+        'moda_cat': imputer_moda
+    }
+
+    # Salvar o dicionário de Imputers
+    with open(config['IMPUTERS_PKL_OUTPUT'], 'wb') as file:
+        pickle.dump(imputadores, file)
+    print(f"Dicionário de SimpleImputers salvo com sucesso em '{config['IMPUTERS_PKL_OUTPUT']}'")
