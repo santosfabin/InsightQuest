@@ -6,3 +6,4 @@ planilha_processada.xlsx
 scaler.pkl
 /venv
 /__pycache__
+/output

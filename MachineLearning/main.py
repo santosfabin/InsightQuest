@@ -3,6 +3,7 @@
 import json
 import pandas as pd
 import numpy as np
+import os 
 
 # Importar módulos e configurações
 import config
@@ -15,6 +16,10 @@ def main():
     """
     Executa o pipeline completo de processamento de dados, clusterização e treinamento de modelo.
     """
+    
+    os.makedirs(config.OUTPUT_DIR, exist_ok=True)
+    print(f"Todos os arquivos de saída serão salvos no diretório: '{config.OUTPUT_DIR}/'")
+
     # 1. Carregamento dos Dados
     df = data_loader.carregar_dados(config.INPUT_FILE)
     if df is None:
@@ -29,7 +34,6 @@ def main():
     df_limpo = data_preprocessor.converter_colunas_numericas_texto(df_limpo)
     
     df_final, info_imputacao = data_preprocessor.imputar_dados_inteligente(df_limpo)
-    
     
     # Salvar informações de imputação
     with open(config.IMPUTATION_INFO_JSON, 'w', encoding='utf-8') as f:
@@ -50,11 +54,8 @@ def main():
     # 4. Treinamento do Modelo
     features_modelo = features_numericas.columns.tolist()
     
-    # Assegurar que colunas de cluster estejam nas features se existirem
     cluster_cols = [col for col in df_clusterizado.columns if 'Cluster_' in col]
     features_modelo.extend(cluster_cols)
-    
-    # Garantir que não haja duplicatas
     features_modelo = list(dict.fromkeys(features_modelo))
 
     model_config = {
@@ -65,7 +66,6 @@ def main():
     model_trainer.treinar_avaliar_e_salvar_modelos(df_clusterizado, features_modelo, config.TARGET_COLS, model_config)
 
     # 5. Salvar Artefatos de Pré-processamento para Produção
-    # Usa o info_imputacao gerado antes para saber quais colunas são numéricas/categóricas
     artefatos_config = {
         'SCALER_PKL_OUTPUT': config.SCALER_PKL_OUTPUT,
         'IMPUTERS_PKL_OUTPUT': config.IMPUTERS_PKL_OUTPUT
