@@ -39,21 +39,25 @@ def converter_colunas_numericas_texto(df: pd.DataFrame) -> pd.DataFrame:
             pass
     return df_convertido
 
-def imputar_dados_inteligente(df: pd.DataFrame) -> (pd.DataFrame, dict):
+def imputar_dados_inteligente(df: pd.DataFrame, force_categorical: list = None) -> (pd.DataFrame, dict):
     """
     Preenche valores ausentes de forma inteligente e retorna os metadados da imputação.
     Retorna o DataFrame tratado e um dicionário com informações do processo.
     """
     df_tratado = df.copy()
     colunas_info = {'colunas_numericas': [], 'colunas_categoricas': [], 'colunas_detalhes': {}}
+    
+    # Se a lista não for passada, inicializa como uma lista vazia para evitar erros
+    if force_categorical is None:
+        force_categorical = []
 
     for coluna in df_tratado.columns:
         df_tratado[coluna].replace(-1, np.nan, inplace=True)
         is_numeric = pd.api.types.is_numeric_dtype(df_tratado[coluna])
         num_unicos = df_tratado[coluna].nunique()
 
-        # Tratar como CATEGÓRICA
-        if not is_numeric or num_unicos < 10:
+        if (not is_numeric or num_unicos < 10) or (coluna in force_categorical):
+            # Tratar como CATEGÓRICA
             colunas_info['colunas_categoricas'].append(coluna)
             mascara = df_tratado[coluna].isnull() | df_tratado[coluna].apply(lambda x: isinstance(x, float) and x % 1 != 0)
             if mascara.any():
@@ -61,13 +65,19 @@ def imputar_dados_inteligente(df: pd.DataFrame) -> (pd.DataFrame, dict):
                 if not moda.empty:
                     df_tratado.loc[mascara, coluna] = moda[0]
                     colunas_info['colunas_detalhes'][coluna] = 'moda'
-        # Tratar como NUMÉRICA
         else:
+            # Tratar como NUMÉRICA
             colunas_info['colunas_numericas'].append(coluna)
             q1, q3 = df_tratado[coluna].quantile([0.25, 0.75])
             iqr = q3 - q1
-            lim_inf, lim_sup = q1 - 1.5 * iqr, q3 + 1.5 * iqr
-            mascara = (df_tratado[coluna] < lim_inf) | (df_tratado[coluna] > lim_sup) | df_tratado[coluna].isnull() | (df_tratado[coluna] == 0)
+            # Evita erro se o IQR for zero
+            if iqr > 0:
+                lim_inf, lim_sup = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+                outliers_mask = (df_tratado[coluna] < lim_inf) | (df_tratado[coluna] > lim_sup)
+            else:
+                outliers_mask = pd.Series(False, index=df_tratado.index)
+
+            mascara = outliers_mask | df_tratado[coluna].isnull() | (df_tratado[coluna] == 0)
             
             dados_validos = df_tratado[coluna][~mascara]
             if not dados_validos.empty:
@@ -82,6 +92,7 @@ def imputar_dados_inteligente(df: pd.DataFrame) -> (pd.DataFrame, dict):
 
     print("Imputação inteligente de dados concluída.")
     return df_tratado, colunas_info
+
 
 def hex_para_rgb(hex_code):
     """Converte um código de cor hexadecimal para três valores RGB."""
