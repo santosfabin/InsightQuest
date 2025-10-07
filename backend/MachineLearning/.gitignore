@@ -1,0 +1,9 @@
+colunas_info.json
+imputadores.pkl
+JogadoresV1.xlsx
+modelo_predicao.pkl
+planilha_processada.xlsx
+scaler.pkl
+/venv
+/__pycache__
+/output
