@@ -36,6 +36,12 @@ COLUNAS_PARA_REMOVER = [
 ]
 COLUNAS_OBRIGATORIAS = ['Target1', 'Target2', 'Target3']
 TARGET_COLS = ['Target1', 'Target2', 'Target3']
+
+# >>> NOVO: Define as colunas a serem explicitamente ignoradas na padronização e clusterização <<<
+COLUNAS_PARA_IGNORAR_NA_CLUSTERIZACAO = [
+    'Target1', 'Target2', 'Target3', 'Código de Acesso'
+]
+
 COLUNAS_DE_COR_HEX = ['F0207']
 FORCE_CATEGORICAL_COLS = [
     'Q0401', 'Q0402', 'Q0403', 'Q0405', 'Q0406', 'Q0407', 
