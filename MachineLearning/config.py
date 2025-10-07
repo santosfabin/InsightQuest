@@ -45,4 +45,4 @@ FORCE_CATEGORICAL_COLS = [
 # --- Configurações de Modelagem ---
 RANDOM_STATE = 42
 N_SPLITS_CV = 5
-K_CLUSTERS = 5
+K_CLUSTERS = 3
