@@ -2,16 +2,13 @@
 
 import pandas as pd
 import io
-from fastapi import APIRouter, UploadFile, File, HTTPException, status, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, status
 
 # Importa o schema de resposta que criamos
 from app.models.prediction_schema import AnalysisResult
 # Importa a instância única do nosso serviço de predição
 from app.services.prediction_service import prediction_service
 
-# Importações para a proteção da rota
-from app.models.user_schema import UserOut
-from app.api.dependencies import get_current_user
 
 # APIRouter nos ajuda a modularizar as rotas, como um mini-aplicativo FastAPI
 router = APIRouter(
@@ -22,18 +19,16 @@ router = APIRouter(
 @router.post(
     "/upload-csv", 
     response_model=AnalysisResult,
-    summary="Realiza predição em um arquivo CSV (requer autenticação)"
+    summary="Realiza predição em um arquivo CSV"
 )
 async def upload_and_predict(
-    file: UploadFile = File(..., description="Arquivo CSV com dados de novos jogadores."),
-    current_user: UserOut = Depends(get_current_user) 
+    file: UploadFile = File(..., description="Arquivo CSV com dados de novos jogadores.") 
 ):
     """
     Recebe um arquivo CSV, executa a pipeline de ML e retorna um JSON com os
     dados originais mais as colunas de predição e cluster.
     """
 
-    print(f"Usuário autenticado '{current_user.username}' está fazendo uma predição.")
 
     # 1. Validação inicial do arquivo
     if not file.filename.endswith('.csv'):
