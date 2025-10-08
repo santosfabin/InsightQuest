@@ -1,5 +1,3 @@
-# config.py
-
 import os
 
 # --- Configurações de Diretórios ---
@@ -9,8 +7,8 @@ OUTPUT_DIR = 'output'
 INPUT_FILE = 'JogadoresV1.xlsx'
 
 # ATUALIZAÇÃO: Caminhos mais descritivos para os arquivos de dados
-PRE_SCALING_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_pre_padronizacao.xlsx') # NOVO ARQUIVO
-POST_SCALING_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_pos_padronizacao_com_cluster.xlsx') # Renomeado para clareza
+PRE_SCALING_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_pre_padronizacao.xlsx')
+POST_SCALING_EXCEL_OUTPUT = os.path.join(OUTPUT_DIR, 'planilha_pos_padronizacao_com_cluster.xlsx')
 
 # Caminhos dos artefatos
 IMPUTATION_INFO_JSON = os.path.join(OUTPUT_DIR, 'colunas_info.json')
@@ -24,8 +22,10 @@ RANDOMFOREST_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_randomforest.pkl')
 SVR_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_svr.pkl')
 RIDGE_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_ridge.pkl')
 
-# Arquivo de resultados
-RMSE_RESULTS_JSON = os.path.join(OUTPUT_DIR, 'rmse_results.json')
+# --- NOVO: Arquivo de resultados com TODAS as métricas ---
+# Substituindo o antigo 'RMSE_RESULTS_JSON' por um nome mais genérico
+METRICS_RESULTS_JSON = os.path.join(OUTPUT_DIR, 'metrics_results.json')
+
 
 # --- Configurações de Colunas ---
 # ... (o resto do arquivo permanece o mesmo) ...

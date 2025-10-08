@@ -98,7 +98,7 @@ def main():
         'RANDOMFOREST_MODEL_PKL': config.RANDOMFOREST_MODEL_PKL,
         'SVR_MODEL_PKL': config.SVR_MODEL_PKL,
         'RIDGE_MODEL_PKL': config.RIDGE_MODEL_PKL,
-        'RMSE_RESULTS_JSON': config.RMSE_RESULTS_JSON
+        'METRICS_RESULTS_JSON': config.METRICS_RESULTS_JSON
     }
 
     model_trainer.executar_todos_os_treinamentos(
