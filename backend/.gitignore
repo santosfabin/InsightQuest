@@ -1,5 +1,4 @@
 # Ambientes Virtuais do Python
-# Ignora pastas de ambiente virtual como 'venv' ou '.venv'
 /venv
 /.venv
 /env
@@ -12,11 +11,12 @@ __pycache__/
 *.pyd
 
 # Artefatos de Machine Learning e Dados
-# Ignora completamente a pasta onde colocaremos os modelos e dados para a API
-/app/ml/
+# Em vez de ignorar a pasta inteira, ignoramos apenas os arquivos de modelo
+# e de dados gerados, permitindo que os scripts .py sejam versionados.
+app/ml/*.pkl
+app/ml/*.json
 
-# <-- ADIÇÃO: Pasta de treinamento de ML
-# Ignora a pasta usada para o desenvolvimento e treinamento dos modelos
+# Pasta de treinamento de ML (continua sendo ignorada)
 /MachineLearning/
 
 # Arquivos gerados pelo processo de treinamento original
