@@ -5,6 +5,7 @@ import json
 import pandas as pd
 import numpy as np
 import os
+import joblib  # <-- ADICIONADO: Importação necessária
 
 # Importar módulos e configurações
 import config
@@ -46,24 +47,18 @@ def main():
     print(f"\nDataFrame pré-padronização salvo em '{config.PRE_SCALING_EXCEL_OUTPUT}'")
 
     # 2. Padronização
-    # --- LÓGICA ATUALIZADA PARA SELECIONAR COLUNAS ---
     print("\nIdentificando colunas para padronização e clusterização...")
-    # Pega todas as colunas disponíveis no dataframe após a limpeza e imputação
     colunas_disponiveis = df_imputado.columns.tolist()
     
-    # Cria a lista de colunas a serem usadas, removendo aquelas que devem ser ignoradas
     colunas_para_padronizar = [
         col for col in colunas_disponiveis 
         if col not in config.COLUNAS_PARA_IGNORAR_NA_CLUSTERIZACAO
     ]
     
-    # Garante que apenas colunas numéricas sejam usadas, pois o scaler só funciona com números
-    # Isso evita erros caso alguma coluna de texto (ex: ID) não tenha sido explicitamente ignorada
     colunas_finais_para_padronizar = df_imputado[colunas_para_padronizar].select_dtypes(include=np.number).columns.tolist()
     
     print(f"Total de {len(colunas_finais_para_padronizar)} colunas selecionadas para o processo.")
     
-    # Alerta o usuário se alguma coluna foi deixada de fora por não ser numérica
     colunas_descartadas = set(colunas_para_padronizar) - set(colunas_finais_para_padronizar)
     if colunas_descartadas:
         print(f"Atenção: As seguintes colunas foram descartadas por não serem numéricas: {list(colunas_descartadas)}")
@@ -92,9 +87,9 @@ def main():
     # 5. Treinamento de Todos os Modelos
     features_para_modelo = colunas_finais_para_padronizar + ['Cluster']
 
-    caminho_saida_features = os.path.join(config.OUTPUT_DIR, 'features_list.pkl')
-    joblib.dump(features_para_modelo, caminho_saida_features)
-    print(f"Lista de features para o modelo salva em '{caminho_saida_features}'")
+    print("\n--- Salvando Artefatos Finais ---")
+    joblib.dump(features_para_modelo, config.FEATURES_LIST_PKL)
+    print(f"Lista de features para o modelo salva em '{config.FEATURES_LIST_PKL}'")
     
     trainer_config = {
         'RANDOM_STATE': config.RANDOM_STATE,
@@ -103,7 +98,7 @@ def main():
         'RANDOMFOREST_MODEL_PKL': config.RANDOMFOREST_MODEL_PKL,
         'SVR_MODEL_PKL': config.SVR_MODEL_PKL,
         'RIDGE_MODEL_PKL': config.RIDGE_MODEL_PKL,
-        'RMSE_RESULTS_JSON': config.RMSE_RESULTS_JSON
+        'METRICS_RESULTS_JSON': config.METRICS_RESULTS_JSON,
     }
 
     model_trainer.executar_todos_os_treinamentos(
