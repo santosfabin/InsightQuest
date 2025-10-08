@@ -1,0 +1,40 @@
+# Ambientes Virtuais do Python
+# Ignora pastas de ambiente virtual como 'venv' ou '.venv'
+/venv
+/.venv
+/env
+/.env
+
+# Arquivos de Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Artefatos de Machine Learning e Dados
+# Ignora completamente a pasta onde colocaremos os modelos e dados para a API
+/app/ml/
+
+# <-- ADIÇÃO: Pasta de treinamento de ML
+# Ignora a pasta usada para o desenvolvimento e treinamento dos modelos
+/MachineLearning/
+
+# Arquivos gerados pelo processo de treinamento original
+/output/
+
+# Ignora planilhas ou dados que possam ser colocados na raiz
+*.csv
+*.xlsx
+
+# Arquivos de configuração de IDEs e Editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de log
+*.log

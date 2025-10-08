@@ -1,5 +1,6 @@
 # main.py
 
+import joblib
 import json
 import pandas as pd
 import numpy as np
@@ -86,11 +87,9 @@ def main():
     # 5. Treinamento de Todos os Modelos
     features_para_modelo = colunas_finais_para_padronizar + ['Cluster']
 
-    # --- INÍCIO DAS LINHAS ADICIONADAS ---
     print("\n--- Salvando Artefatos Finais ---")
     joblib.dump(features_para_modelo, config.FEATURES_LIST_PKL)
     print(f"Lista de features para o modelo salva em '{config.FEATURES_LIST_PKL}'")
-    # --- FIM DAS LINHAS ADICIONADAS ---
     
     trainer_config = {
         'RANDOM_STATE': config.RANDOM_STATE,
