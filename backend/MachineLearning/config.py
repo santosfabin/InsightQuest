@@ -1,3 +1,5 @@
+# config.py
+
 import os
 
 # --- Configurações de Diretórios ---
@@ -15,6 +17,7 @@ IMPUTATION_INFO_JSON = os.path.join(OUTPUT_DIR, 'colunas_info.json')
 IMPUTERS_PKL_OUTPUT = os.path.join(OUTPUT_DIR, 'imputadores.pkl')
 STANDARD_SCALER_PKL = os.path.join(OUTPUT_DIR, 'standard_scaler.pkl')
 KMEANS_MODEL_PKL = os.path.join(OUTPUT_DIR, 'kmeans_model.pkl')
+FEATURES_LIST_PKL = os.path.join(OUTPUT_DIR, 'features_list.pkl') # <-- ADICIONADO
 
 # Caminhos dos modelos de regressão
 LIGHTGBM_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_lightgbm.pkl')
@@ -23,12 +26,10 @@ SVR_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_svr.pkl')
 RIDGE_MODEL_PKL = os.path.join(OUTPUT_DIR, 'model_ridge.pkl')
 
 # --- NOVO: Arquivo de resultados com TODAS as métricas ---
-# Substituindo o antigo 'RMSE_RESULTS_JSON' por um nome mais genérico
 METRICS_RESULTS_JSON = os.path.join(OUTPUT_DIR, 'metrics_results.json')
 
 
 # --- Configurações de Colunas ---
-# ... (o resto do arquivo permanece o mesmo) ...
 COLUNAS_PARA_REMOVER = [
     'F0299 - Explicação Tempo', 'PTempoTotalExpl', 'T1199Expl',
     'T1205Expl', 'T0499 - Explicação Tempo', 'T1210Expl',
@@ -37,7 +38,6 @@ COLUNAS_PARA_REMOVER = [
 COLUNAS_OBRIGATORIAS = ['Target1', 'Target2', 'Target3']
 TARGET_COLS = ['Target1', 'Target2', 'Target3']
 
-# >>> NOVO: Define as colunas a serem explicitamente ignoradas na padronização e clusterização <<<
 COLUNAS_PARA_IGNORAR_NA_CLUSTERIZACAO = [
     'Target1', 'Target2', 'Target3', 'Código de Acesso'
 ]
