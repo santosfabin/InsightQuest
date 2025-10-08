@@ -1,5 +1,6 @@
 # main.py
 
+import joblib
 import json
 import pandas as pd
 import numpy as np
@@ -90,6 +91,10 @@ def main():
 
     # 5. Treinamento de Todos os Modelos
     features_para_modelo = colunas_finais_para_padronizar + ['Cluster']
+
+    caminho_saida_features = os.path.join(config.OUTPUT_DIR, 'features_list.pkl')
+    joblib.dump(features_para_modelo, caminho_saida_features)
+    print(f"Lista de features para o modelo salva em '{caminho_saida_features}'")
     
     trainer_config = {
         'RANDOM_STATE': config.RANDOM_STATE,
