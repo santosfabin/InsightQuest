@@ -26,7 +26,6 @@ router = APIRouter(
 )
 async def upload_and_predict(
     file: UploadFile = File(..., description="Arquivo CSV com dados de novos jogadores."),
-    # ADICIONE A LINHA ABAIXO PARA PROTEGER A ROTA
     current_user: UserOut = Depends(get_current_user) 
 ):
     """
