@@ -1,7 +1,15 @@
-fastapi
-uvicorn[standard]
-pandas
-scikit-learn
+# Framework principal e servidor
+fastapi==0.103.1
+uvicorn[standard]==0.23.2
 
-para rodar o backend:
-uvicorn app.main:app --reload
+# Para manipulação de dados e Machine Learning
+pandas
+scikit-learn==1.7.1
+joblib
+
+# Necessário para o FastAPI lidar com uploads de arquivos e formulários de login
+python-multipart
+
+# Para autenticação e segurança com JWT
+python-jose[cryptography]
+passlib[bcrypt]
