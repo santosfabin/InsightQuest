@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pandas
+scikit-learn
+
+para rodar o backend:
+uvicorn app.main:app --reload
