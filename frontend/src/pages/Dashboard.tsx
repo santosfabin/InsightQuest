@@ -40,6 +40,7 @@ export default function Dashboard() {
 				);
 			}
 		};
+
 		loadHistory();
 	}, []);
 
@@ -80,43 +81,20 @@ export default function Dashboard() {
 	};
 
 	const handleProcess = async () => {
-		if (!file) {
-			console.log(
-				"handleProcess: Interrompido porque não há arquivo (file)."
-			);
-			return;
-		}
-
-		console.log("1. handleProcess: Início do processamento.");
+		if (!file) return;
 		setIsProcessing(true);
 
 		setTimeout(async () => {
-			console.log("2. setTimeout: Lógica de simulação iniciada.");
-
 			setResults(mockResults);
 			setIsProcessing(false);
 			setShowUpload(false);
 
 			try {
-				console.log("3. setTimeout: Tentando chamar saveAnalysis...");
 				await saveAnalysis(mockResults);
-				console.log(
-					"5. setTimeout: saveAnalysis completado com SUCESSO."
-				);
-
-				console.log(
-					"6. setTimeout: Tentando chamar getHistory para atualizar a UI..."
-				);
 				const updatedHistory = await getHistory();
 				setHistory(updatedHistory);
-				console.log(
-					"7. setTimeout: getHistory completado com SUCESSO."
-				);
 			} catch (error) {
-				console.error(
-					"ERRO CRÍTICO no bloco try/catch do setTimeout:",
-					error
-				);
+				console.error("Falha ao salvar a análise no IndexedDB:", error);
 			}
 		}, 2500);
 	};
