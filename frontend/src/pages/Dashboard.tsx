@@ -1,5 +1,3 @@
-// frontend/src/pages/Dashboard.tsx
-
 import { useState, useEffect } from "react";
 import {
 	BarChart3,
@@ -16,7 +14,6 @@ import TargetCard from "../components/TargetCard";
 import PredictionsTable from "../components/PredictionsTable";
 import ChartsSection from "../components/ChartsSection";
 
-// CORREÇÃO APLICADA AQUI: Separação das importações de valores e tipos.
 import { saveAnalysis, getHistory } from "../services/indexedDB";
 import type {
 	AnalysisResults,
@@ -116,7 +113,6 @@ export default function Dashboard() {
 					"7. setTimeout: getHistory completado com SUCESSO."
 				);
 			} catch (error) {
-				// Se houver qualquer erro, ele será capturado e exibido aqui.
 				console.error(
 					"ERRO CRÍTICO no bloco try/catch do setTimeout:",
 					error
