@@ -6,10 +6,8 @@ uvicorn[standard]==0.23.2
 pandas
 scikit-learn==1.7.1
 joblib
+xgboost
+lightgbm
 
-# Necessário para o FastAPI lidar com uploads de arquivos e formulários de login
+# Necessário para o FastAPI lidar com uploads de arquivos
 python-multipart
-
-# Para autenticação e segurança com JWT
-python-jose[cryptography]
-passlib[bcrypt]

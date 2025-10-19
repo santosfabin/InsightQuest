@@ -41,7 +41,7 @@ async def upload_and_predict(
         # 2. Ler o conteúdo do arquivo em memória e carregar em um DataFrame do Pandas
         contents = await file.read()
         buffer = io.StringIO(contents.decode('utf-8'))
-        df = pd.read_csv(buffer)
+        df = pd.read_csv(buffer, sep=';')
 
         # 3. Chamar nosso serviço de predição para fazer todo o trabalho pesado
         # A instância 'prediction_service' já foi criada e já tem os modelos carregados.
