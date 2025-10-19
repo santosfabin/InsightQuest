@@ -15,6 +15,7 @@ __pycache__/
 # e de dados gerados, permitindo que os scripts .py sejam versionados.
 app/ml/*.pkl
 app/ml/*.json
+app/ml/**/*.joblib  # <-- Adicionada regra para .joblib em subpastas
 
 # Pasta de treinamento de ML (continua sendo ignorada)
 /MachineLearning/
