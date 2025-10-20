@@ -232,20 +232,41 @@ class PredictionService:
 
         # === Formatação da Saída ===
         print("➡️ Formatando Saída...")
-        # Adiciona as colunas de predição ao DataFrame original
-        df_original_para_retorno['PREDICAO_Target1'] = predictions.get('Target1', np.nan)
-        df_original_para_retorno['PREDICAO_Target2'] = predictions.get('Target2', np.nan)
-        df_original_para_retorno['PREDICAO_Target3'] = predictions.get('Target3', np.nan)
+
+        # Adiciona as colunas de predição ao DataFrame que passou por TODA a pipeline (df_pipeline)
+        # df_pipeline contém as colunas Cluster_X criadas no Bloco 11
+        df_pipeline['PREDICAO_Target1'] = predictions.get('Target1', np.nan)
+        df_pipeline['PREDICAO_Target2'] = predictions.get('Target2', np.nan)
+        df_pipeline['PREDICAO_Target3'] = predictions.get('Target3', np.nan)
+
+        # Colunas de predição a serem excluídas do original_data
+        pred_cols = ['PREDICAO_Target1', 'PREDICAO_Target2', 'PREDICAO_Target3']
 
         prediction_rows = []
-        for _, row in df_original_para_retorno.iterrows():
-             # Cria o dicionário original_data ANTES de adicionar as predições
-            original_dict = row.drop(['PREDICAO_Target1', 'PREDICAO_Target2', 'PREDICAO_Target3'], errors='ignore').to_dict()
+        # Itera sobre o DataFrame que contém TODAS as features geradas (df_pipeline)
+        for index, row in df_pipeline.iterrows():
+            # Cria o dicionário original_data a partir da linha atual,
+            # excluindo apenas as colunas de predição finais.
+            # Isso garante que Cluster_0, Cluster_1, _vs_cluster_mean, etc., sejam incluídos.
+            original_dict = row.drop(pred_cols, errors='ignore').to_dict()
+
+            # Trata possíveis NaNs ou Infs remanescentes que não são compatíveis com JSON
+            for key, value in original_dict.items():
+                if isinstance(value, (int, float)):
+                    if pd.isna(value) or np.isinf(value):
+                        original_dict[key] = None # Converte NaN/Inf para null (JSON compliant)
+                # Opcional: Converter explicitamente numpy types para tipos Python nativos
+                if isinstance(value, np.integer):
+                    original_dict[key] = int(value)
+                elif isinstance(value, np.floating):
+                     original_dict[key] = float(value) if not (pd.isna(value) or np.isinf(value)) else None
+
+
             prediction_rows.append(
                 PredictionRow(
-                    PREDICAO_Target1=row['PREDICAO_Target1'],
-                    PREDICAO_Target2=row['PREDICAO_Target2'],
-                    PREDICAO_Target3=row['PREDICAO_Target3'],
+                    PREDICAO_Target1=row['PREDICAO_Target1'] if pd.notna(row['PREDICAO_Target1']) else None, # Envia null se for NaN
+                    PREDICAO_Target2=row['PREDICAO_Target2'] if pd.notna(row['PREDICAO_Target2']) else None,
+                    PREDICAO_Target3=row['PREDICAO_Target3'] if pd.notna(row['PREDICAO_Target3']) else None,
                     original_data=original_dict
                 )
             )
@@ -253,7 +274,7 @@ class PredictionService:
         print("✅ Pipeline concluída com sucesso!")
         return AnalysisResult(
             total_rows=total_rows,
-            processed_rows=len(df_original_para_retorno),
+            processed_rows=len(df_pipeline), # Usa o df processado
             predictions=prediction_rows
         )
 
