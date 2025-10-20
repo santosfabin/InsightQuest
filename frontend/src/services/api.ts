@@ -1,137 +1,62 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// frontend/src/services/api.ts
 
-interface UploadResponse {
-  totalMatches: number;
-  processedSuccessfully: number;
-  modelAccuracy: number;
-  targets: {
-    target1: {
-      mean: number;
-      std: number;
-      distribution: string;
-    };
-    target2: {
-      mean: number;
-      std: number;
-      distribution: string;
-    };
-    target3: {
-      mean: number;
-      std: number;
-      distribution: string;
-    };
-  };
-  predictions: Array<{
-    match: number;
-    target1: number;
-    target2: number;
-    target3: number;
-    confidence: number;
-  }>;
-  timeSeriesData: Array<{
-    period: string;
-    target1: number;
-    target2: number;
-    target3: number;
-  }>;
-  targetDistribution: Array<{
-    name: string;
-    target1: number;
-    target2: number;
-    target3: number;
-  }>;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+// ===== INTERFACES PARA A RESPOSTA DA API =====
+
+// Interface correspondente ao schema 'PredictionRow' do backend
+export interface ApiPredictionRow { // <-- EXPORT ADICIONADO
+  PREDICAO_Target1: number;
+  PREDICAO_Target2: number;
+  PREDICAO_Target3: number;
+  original_data: { [key: string]: unknown };
 }
 
-interface HistoryItem {
-  id: string;
-  filename: string;
-  uploadDate: string;
-  totalMatches: number;
-  accuracy: number;
+// Interface correspondente ao schema 'AnalysisResult' do backend
+export interface ApiResponse { // <-- EXPORT ADICIONADO
+  total_rows: number;
+  processed_rows: number;
+  predictions: ApiPredictionRow[];
 }
 
-// Upload e análise de arquivo CSV
-export const uploadAndPredict = async (file: File): Promise<UploadResponse> => {
+// ===== FUNÇÃO DE UPLOAD E PREDIÇÃO =====
+
+export const uploadAndPredict = async (file: File): Promise<ApiResponse> => {
   const formData = new FormData();
   formData.append('file', file);
-  
+
+  const predictUrl = `${API_BASE_URL}/predict/upload-csv`;
+  console.log(`Enviando arquivo para: ${predictUrl}`);
+
   try {
-    const response = await fetch(`${API_BASE_URL}/predict`, {
+    const response = await fetch(predictUrl, {
       method: 'POST',
       body: formData,
     });
-    
-    if (!response.ok) {
-      throw new Error('Erro ao processar arquivo');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro no upload:', error);
-    throw error;
-  }
-};
 
-// Buscar histórico de análises
-export const getHistory = async (): Promise<HistoryItem[]> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/history`);
-    
     if (!response.ok) {
-      throw new Error('Erro ao buscar histórico');
+      let errorDetail = `Erro HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.detail || errorDetail;
+      } catch (jsonError) { 
+        // Loga o erro ao tentar parsear o corpo da resposta como JSON
+        console.debug('Não foi possível parsear corpo de erro como JSON:', jsonError);
+       }
+      console.error(`Falha na requisição para ${predictUrl}: ${errorDetail}`);
+      throw new Error(`Falha ao processar o arquivo: ${errorDetail}`);
     }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro ao buscar histórico:', error);
-    throw error;
-  }
-};
 
-// Buscar uma análise específica do histórico
-export const getAnalysisById = async (id: string): Promise<UploadResponse> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/analysis/${id}`);
-    
-    if (!response.ok) {
-      throw new Error('Erro ao buscar análise');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro ao buscar análise:', error);
-    throw error;
-  }
-};
+    const results: ApiResponse = await response.json();
+    console.log("Resultados recebidos da API:", results);
+    return results;
 
-// Deletar uma análise do histórico
-export const deleteAnalysis = async (id: string): Promise<void> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/analysis/${id}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Erro ao deletar análise');
-    }
   } catch (error) {
-    console.error('Erro ao deletar análise:', error);
-    throw error;
-  }
-};
-
-// Exportar resultados em CSV
-export const exportResultsCSV = async (analysisId: string): Promise<Blob> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/export/${analysisId}/csv`);
-    
-    if (!response.ok) {
-      throw new Error('Erro ao exportar CSV');
+    console.error('Erro durante a chamada da API:', error);
+    if (error instanceof Error) {
+       throw new Error(`Erro de rede ou conexão: ${error.message}`);
+    } else {
+       throw new Error(`Erro desconhecido durante a chamada da API: ${String(error)}`);
     }
-    
-    return await response.blob();
-  } catch (error) {
-    console.error('Erro ao exportar:', error);
-    throw error;
   }
 };
