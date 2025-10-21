@@ -167,7 +167,7 @@ def engenharia_final(df: pd.DataFrame, coluns_json: dict) -> pd.DataFrame:
         numeric_cols_for_interaction = [c for c in numeric_cols_for_interaction if not c.startswith(f"{CLUSTER_COL}_")]
 
         cluster_means = df_out.groupby(CLUSTER_COL)[numeric_cols_for_interaction].transform('mean')
-        interaction_features = df_out[numeric_cols_for_interaction].subtract(cluster_means)
+        interaction_features = df_out[numeric_cols_for_interaction] - cluster_means
         interaction_features.columns = [f'{col}_vs_cluster_mean' for col in interaction_features.columns]
         df_out = pd.concat([df_out, interaction_features], axis=1)
         df_out.drop(columns=[CLUSTER_COL], inplace=True) # Remove a original
