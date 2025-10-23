@@ -15,6 +15,34 @@ export interface ApiResponse {
 	total_rows: number;
 	processed_rows: number;
 	predictions: ApiPredictionRow[];
+	r2_score_target1?: number | null;
+	r2_score_target2?: number | null;
+	r2_score_target3?: number | null;
+	correlation_heatmap_data?: HeatmapDataRow[] | null;
+}
+
+export interface RoundResponseData {
+  round: string;
+  hits: number;
+  errors: number;
+  omissions: number;
+  total: number;
+  [key: string]: string | number;
+}
+
+export interface RoundTimeData {
+  round: string;
+  avgTime: number;
+  [key: string]: string | number;
+}
+
+export interface HeatmapDataItem {
+    x: string;
+    y: number;
+}
+export interface HeatmapDataRow {
+    id: string; // Feature name
+    data: HeatmapDataItem[];
 }
 
 // ===== FUNÇÃO DE UPLOAD E PREDIÇÃO =====

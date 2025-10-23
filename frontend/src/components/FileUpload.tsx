@@ -20,10 +20,10 @@ export default function FileUpload({
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0];
-    if (uploadedFile && uploadedFile.name.endsWith('.csv')) {
+    if (uploadedFile && (uploadedFile.name.endsWith('.csv') || uploadedFile.name.endsWith('.xlsx'))) {
       setFile(uploadedFile);
     } else {
-      alert('Por favor, selecione um arquivo CSV válido');
+      alert('Por favor, selecione um arquivo CSV ou XLSX válido');
     }
   };
 
@@ -44,10 +44,12 @@ export default function FileUpload({
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.name.endsWith('.csv')) {
+      
+      // --- MUDANÇA 2 ---
+      if (droppedFile.name.endsWith('.csv') || droppedFile.name.endsWith('.xlsx')) {
         setFile(droppedFile);
       } else {
-        alert('Por favor, selecione um arquivo CSV válido');
+        alert('Por favor, selecione um arquivo CSV ou XLSX válido');
       }
     }
   };
@@ -77,7 +79,8 @@ export default function FileUpload({
           >
             <input
               type="file"
-              accept=".csv"
+              // --- MUDANÇA 3 ---
+              accept=".csv, .xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv"
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
@@ -101,7 +104,7 @@ export default function FileUpload({
                   Arraste seu arquivo aqui ou clique para selecionar
                 </p>
                 <p className="text-gray-400 text-sm">
-                  Suporta apenas arquivos CSV
+                   Suporta arquivos CSV e XLSX
                 </p>
               </div>
             )}
