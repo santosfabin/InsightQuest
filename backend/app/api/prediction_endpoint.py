@@ -24,34 +24,55 @@ router = APIRouter(
     response_model=AnalysisResult,
     summary="Realiza predição em um arquivo CSV"
 )
-async def upload_and_predict(file: UploadFile = File(..., description="Arquivo CSV com dados de novos jogadores.")):
+
+async def upload_and_predict(file: UploadFile = File(..., description="Arquivo CSV ou XLSX com dados.")):
     """
-    Recebe um arquivo CSV, executa a pipeline de ML e retorna um JSON com os
+    Recebe um arquivo CSV ou XLSX, executa a pipeline de ML e retorna um JSON com os
     dados originais mais as colunas de predição.
     """
-    # 1. Validação inicial do arquivo
-    if not file.filename.endswith('.csv'):
+    # 1. Validação do formato do arquivo (CSV ou XLSX)
+    file_extension = file.filename.split('.')[-1].lower()
+    if file_extension not in ['csv', 'xlsx']:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Formato de arquivo inválido. Por favor, envie um arquivo .csv."
+            detail="Formato de arquivo inválido. Por favor, envie um arquivo .csv ou .xlsx"
         )
 
     try:
-        # 2. Ler o conteúdo do arquivo e carregar em DataFrame
+        # 2. Ler o conteúdo do arquivo
         logger.info(f"Recebido arquivo: {file.filename}")
         contents = await file.read()
-        buffer = io.StringIO(contents.decode('utf-8'))
-        df = pd.read_csv(buffer, sep=';') # Usa ponto e vírgula como separador
-        logger.info(f"Arquivo CSV lido com sucesso. Dimensões: {df.shape}")
+        
+        df = None # Inicializa o DataFrame
 
-        # --- VALIDAÇÃO ADICIONAL (OPÇÃO B): Verificar colunas Target ---
-        required_target_cols = ['Target1', 'Target2', 'Target3']
-        missing_targets = [col for col in required_target_cols if col not in df.columns]
+        if file_extension == 'csv':
+            # --- Lógica para CSV (como antes) ---
+            buffer = io.StringIO(contents.decode('utf-8'))
+            df = pd.read_csv(buffer, sep=';')
+            logger.info("Arquivo CSV lido com sucesso.")
+        
+        elif file_extension == 'xlsx':
+            # --- LÓGICA ADICIONADA PARA EXCEL ---
+            buffer = io.BytesIO(contents) # Excel lê bytes, não texto
+            # pd.read_excel lê a *primeira aba* por padrão, o que geralmente é o correto.
+            df = pd.read_excel(buffer, engine='openpyxl') 
+            logger.info("Arquivo XLSX lido com sucesso.")
 
-        if missing_targets:
-            logger.warning(f"AVISO: O arquivo '{file.filename}' não contém as colunas Target originais: {missing_targets}.")
-            logger.warning("A pipeline de predição continuará, mas os dados originais na resposta não incluirão esses targets.")
-        # --- FIM DA VALIDAÇÃO ADICIONAL ---
+        if df is None or df.empty:
+             raise pd.errors.EmptyDataError("O arquivo está vazio ou não pôde ser lido.")
+
+        logger.info(f"Dimensões do DataFrame: {df.shape}")
+
+        # --- CORREÇÃO DE DECIMAL (Mantida, pois é segura) ---
+        target_cols_to_fix = ['Target1', 'Target2', 'Target3']
+        for col in target_cols_to_fix:
+            if col in df.columns:
+                df[col] = pd.to_numeric(
+                    df[col].astype(str).str.replace(',', '.'), 
+                    errors='coerce'
+                )
+        logger.info("Colunas Target forçadas para numérico (tratando decimal , e .)")
+        # --- FIM DA CORREÇÃO ---
 
         # 3. Chamar o serviço de predição
         logger.info("Enviando DataFrame para o serviço de predição...")
@@ -62,14 +83,13 @@ async def upload_and_predict(file: UploadFile = File(..., description="Arquivo C
         return results
 
     except pd.errors.EmptyDataError:
-        logger.error(f"Erro ao processar '{file.filename}': Arquivo CSV vazio.")
+        logger.error(f"Erro ao processar '{file.filename}': Arquivo vazio.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Arquivo CSV enviado está vazio."
+            detail="Arquivo enviado está vazio ou não pôde ser lido."
         )
     except Exception as e:
-        # Captura exceções genéricas
-        logger.error(f"Erro inesperado durante o processamento de '{file.filename}': {e}", exc_info=True) # Loga o traceback
+        logger.error(f"Erro inesperado durante o processamento de '{file.filename}': {e}", exc_info=True) 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ocorreu um erro interno ao processar o arquivo: {str(e)}"

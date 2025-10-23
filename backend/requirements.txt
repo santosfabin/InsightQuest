@@ -8,6 +8,7 @@ scikit-learn==1.7.1
 joblib
 xgboost
 lightgbm
+openpyxl
 
 # Necessário para o FastAPI lidar com uploads de arquivos
 python-multipart

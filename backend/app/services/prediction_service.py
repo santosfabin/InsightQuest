@@ -5,11 +5,21 @@ import joblib
 import pickle
 import json
 import numpy as np
-from typing import Dict, Any
+from pydantic import BaseModel
+from typing import Dict, Optional, List
+from sklearn.metrics import r2_score
 
 from app.core.config import settings
-from app.models.prediction_schema import AnalysisResult, PredictionRow
+from app.models.prediction_schema import AnalysisResult, PredictionRow, HeatmapDataRow, HeatmapDataItem
 from app.ml import preprocessing, feature_engineering
+
+class HeatmapDataItem(BaseModel):
+    x: str
+    y: float
+
+class HeatmapDataRow(BaseModel):
+    id: str
+    data: List[HeatmapDataItem]
 
 class PredictionService:
     def __init__(self):
@@ -193,9 +203,86 @@ class PredictionService:
                 print(f"      ❌ ERRO ao prever {target}: {e}")
                 predictions[target] = np.full(len(df_pipeline), np.nan)
 
+        # --- SEÇÃO ADICIONAL: CÁLCULO DO R² ---
+        print("    -> Calculando R² (se houver dados reais)...")
+        r2_scores: Dict[str, Optional[float]] = {
+            'Target1': None,
+            'Target2': None,
+            'Target3': None
+        }
+        
+        for target in self.targets:
+            if target in df.columns:
+                y_true_series = pd.to_numeric(df[target], errors='coerce')
+                y_pred_series = pd.Series(predictions.get(target))
+                
+                valid_mask = y_true_series.notna() & y_pred_series.notna()
+                
+                if valid_mask.sum() > 1: # Precisa de pelo menos 2 pontos
+                    y_true_valid = y_true_series[valid_mask]
+                    y_pred_valid = y_pred_series[valid_mask]
+                    try:
+                        score = r2_score(y_true_valid, y_pred_valid)
+                        r2_scores[target] = float(score)
+                        print(f"         ✅ R² para {target}: {score:.4f}")
+                    except Exception as r2_e:
+                        print(f"         ⚠️ Não foi possível calcular R² para {target}: {r2_e}")
+                else:
+                    print(f"         ℹ️ Coluna {target} real encontrada, mas sem dados válidos suficientes para R².")
+            else:
+                print(f"         ℹ️ Coluna {target} real não encontrada no CSV. Pulando R².")
+        # --- FIM DA SEÇÃO R² ---
+
         df_pipeline['PREDICAO_Target1'] = predictions.get('Target1', np.nan)
         df_pipeline['PREDICAO_Target2'] = predictions.get('Target2', np.nan)
         df_pipeline['PREDICAO_Target3'] = predictions.get('Target3', np.nan)
+
+        heatmap_data: Optional[List[HeatmapDataRow]] = None
+        try:
+            print("    -> Calculando Heatmap de Correlação...")
+            pred_cols = ['PREDICAO_Target1', 'PREDICAO_Target2', 'PREDICAO_Target3']
+            
+            # Pega as features mais importantes do seu coluns.json
+            top_features = list(set(
+                self.coluns_json.get('target1_top10', []) +
+                self.coluns_json.get('target2_top10', []) +
+                self.coluns_json.get('target3_top10', [])
+            ))
+            # Adiciona outras features-chave que criamos
+            key_features = [
+                'taxa_acerto_total', 'tempo_medio_questao', 'media_emocional', 
+                'qualidade_sono', 'satisfacao_jogo', 'Cluster_0', 'Cluster_1'
+            ]
+            features_to_corr = sorted(list(set(top_features + key_features)))
+            # Garante que as colunas realmente existem no DF processado
+            features_to_corr = [f for f in features_to_corr if f in df_pipeline.columns]
+
+            if features_to_corr:
+                # Calcula a matriz de correlação completa
+                corr_matrix = df_pipeline[features_to_corr + pred_cols].corr()
+                
+                # Filtra apenas a correlação das features contra as predições
+                corr_data = corr_matrix[pred_cols].loc[features_to_corr]
+                
+                # Formata para o Nivo
+                heatmap_dict_list = [] # <-- MUDANÇA: Agora é _dict_list
+                for feature, row in corr_data.iterrows():
+                    # Cria um dicionário para a linha
+                    nivo_row_dict = {"id": feature, "data": []} # <-- MUDANÇA: É um dict
+                    for target_name, value in row.items():
+                        if pd.notna(value):
+                            clean_target_name = target_name.replace('PREDICAO_', '')
+                            # Cria um dicionário para o ponto de dado
+                            data_item_dict = {"x": clean_target_name, "y": round(value, 3)} # <-- MUDANÇA: É um dict
+                            nivo_row_dict["data"].append(data_item_dict) # <-- Adiciona o dict
+                    heatmap_dict_list.append(nivo_row_dict) # <-- Adiciona o dict da linha
+                
+                heatmap_data = heatmap_dict_list
+                print(f"         ✅ Heatmap de correlação calculado para {len(heatmap_data)} features.")
+            else:
+                print("         ℹ️ Nenhuma feature de correlação encontrada para o heatmap.")
+        except Exception as e:
+            print(f"         ⚠️ Erro ao calcular heatmap de correlação: {e}")
 
         # CORREÇÃO 1: Adiciona o 'Código de Acesso' de volta
         if codigos_de_acesso is not None:
@@ -226,7 +313,11 @@ class PredictionService:
         return AnalysisResult(
             total_rows=total_rows,
             processed_rows=len(df_pipeline),
-            predictions=prediction_rows
+            predictions=prediction_rows,
+            r2_score_target1=r2_scores['Target1'],
+            r2_score_target2=r2_scores['Target2'],
+            r2_score_target3=r2_scores['Target3'],
+            correlation_heatmap_data=heatmap_data
         )
         
 

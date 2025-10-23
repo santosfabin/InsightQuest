@@ -1,17 +1,13 @@
-// frontend/src/components/PredictionsTable.tsx
-
 import type { ApiPredictionRow } from "../services/api";
 
 interface PredictionsTableProps {
 	predictions: ApiPredictionRow[];
 }
 
-// Função auxiliar para formatar com segurança os valores que podem ser nulos
 const formatNullableValue = (
 	value: number | null,
 	fallback: string = "N/A"
 ): string => {
-	// Se o valor for um número, formate-o. Caso contrário, retorne o texto alternativo.
 	if (typeof value === "number") {
 		return value.toFixed(3);
 	}
@@ -23,12 +19,13 @@ export default function PredictionsTable({
 }: PredictionsTableProps) {
 	return (
 		<div className="bg-white rounded-3xl shadow-lg p-8">
-			<h3 className="text-xl font-bold text-gray-800 mb-6">
+			<h3 className="text-xl font-bold text-gray-800 text-center mb-4">
 				Resultados da Predição
 			</h3>
-			<div className="overflow-x-auto">
-				<table className="w-full">
-					<thead>
+			<div className="max-h-[60vh] overflow-y-auto relative pr-2">
+				<div className="overflow-x-auto">
+				<table className="w-full border-collapse">
+					<thead className="sticky top-[68px] bg-white z-10">
 						<tr className="border-b-2 border-gray-100">
 							<th className="text-left text-gray-600 font-semibold py-4 px-4">
 								#
@@ -115,6 +112,8 @@ export default function PredictionsTable({
 					</tbody>
 				</table>
 			</div>
+			</div>
+			
 		</div>
 	);
 }

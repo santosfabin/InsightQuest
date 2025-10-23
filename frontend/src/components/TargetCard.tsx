@@ -1,4 +1,4 @@
-import { Target } from 'lucide-react';
+import { Target, CheckCircle } from 'lucide-react';
 
 interface TargetStats {
   mean: number;
@@ -9,9 +9,10 @@ interface TargetStats {
 interface TargetCardProps {
   title: string;
   stats: TargetStats;
+  r2Score?: number | null;
 }
 
-export default function TargetCard({ title, stats }: TargetCardProps) {
+export default function TargetCard({ title, stats, r2Score }: TargetCardProps) {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-purple-50 rounded-2xl p-6 border-2 border-purple-100 hover:border-purple-300 transition-all">
       <div className="flex items-center justify-between mb-4">
@@ -27,7 +28,7 @@ export default function TargetCard({ title, stats }: TargetCardProps) {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-sm">Desvio Padrão</span>
-          <span className="font-bold text-gray-800">{stats.std}</span>
+          <span className="font-bold text-gray-800">{stats.std.toFixed(3)}</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-sm">Distribuição</span>
@@ -35,6 +36,16 @@ export default function TargetCard({ title, stats }: TargetCardProps) {
             {stats.distribution}
           </span>
         </div>
+        {r2Score !== null && r2Score !== undefined && (
+          <div className="flex justify-between items-center pt-2 border-t border-purple-100">
+            <span className="text-gray-600 text-sm flex items-center gap-1">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Score R² (vs Real)
+            </span>
+            <span className="font-bold text-green-600 text-lg">{r2Score.toFixed(4)}</span>
+          </div>
+        )}
+
       </div>
     </div>
   );
