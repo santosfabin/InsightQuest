@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 import { BarChart3, Clock, Activity } from "lucide-react";
 
 interface SidebarProps {
@@ -41,8 +40,8 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           onClick={() => setActiveTab("history")}
           className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all duration-300 w-full text-left ${
             activeTab === "history"
-              ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/40 animate-pulse-subtle" // Estilo ATIVO original
-              : "text-gray-600 hover:text-gray-800 hover:bg-white/50" // Estilo INATIVO/HOVER original
+              ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/40 animate-pulse-subtle"
+              : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
           }`}
         >
           <Clock className="w-5 h-5" />
@@ -51,12 +50,9 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         {/* Botão Preview */}
       </nav>
 
-      {/* Espaço para futuro rodapé ou outras informações */}
       <div className="mt-auto text-center text-xs text-gray-400">
-         {/* Conteúdo do rodapé aqui, se necessário */}
       </div>
 
-      {/* Definição da animação CSS para o efeito 'pulse-subtle' */}
       <style>{`
         @keyframes pulse-subtle {
           0%, 100% {

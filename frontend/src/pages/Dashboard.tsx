@@ -40,7 +40,6 @@ import HistoryList from "../components/HistoryList";
 import { addHistoryEntry } from "../services/db";
 import type { HistoryEntry } from "../services/db";
 
-// ... (interfaces permanecem iguais) ...
 interface ColorFamilyDetails {
   color: string;
   rule: string;
@@ -92,7 +91,6 @@ interface PerformanceEvolutionData {
   data: PerformanceEvolutionPoint[];
 }
 
-// ... (funções getColorFamily, rgbToHsl, colorFamilyDetails permanecem iguais) ...
 const rgbToHsl = (
   r: number,
   g: number,
@@ -211,7 +209,6 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showDetailsTable, setShowDetailsTable] = useState(false);
 
-  // ... (handlers permanecem iguais) ...
   const handleProcess = async () => {
     if (!file) {
       setError("Nenhum arquivo selecionado.");
@@ -555,13 +552,12 @@ export default function Dashboard() {
 
     const hasPerformanceEvolutionData =
       predictions.length > 0 &&
-      predictions[0].original_data["Q0401"] !== undefined && // Acertos R1
-      predictions[0].original_data["Q0405"] !== undefined && // Acertos R2
-      predictions[0].original_data["Q0409"] !== undefined && // Acertos R3
-      predictions[0].original_data["Q0413"] !== undefined; // Total acertos
+      predictions[0].original_data["Q0401"] !== undefined &&
+      predictions[0].original_data["Q0405"] !== undefined &&
+      predictions[0].original_data["Q0409"] !== undefined &&
+      predictions[0].original_data["Q0413"] !== undefined;
 
     if (hasPerformanceEvolutionData) {
-      // 🎯 CALCULAR DINAMICAMENTE O MÁXIMO (= número de questões)
       const maxR1 = Math.max(
         ...predictions.map((p) => Number(p.original_data["Q0401"] ?? 0))
       );
@@ -575,8 +571,7 @@ export default function Dashboard() {
         ...predictions.map((p) => Number(p.original_data["Q0413"] ?? 0))
       );
 
-      // Usar os máximos como referência para o número de questões
-      const QUESTIONS_R1 = maxR1 > 0 ? maxR1 : 20; // fallback para 20
+      const QUESTIONS_R1 = maxR1 > 0 ? maxR1 : 20;
       const QUESTIONS_R2 = maxR2 > 0 ? maxR2 : 20;
       const QUESTIONS_R3 = maxR3 > 0 ? maxR3 : 20;
       const TOTAL_QUESTIONS = maxTotal > 0 ? maxTotal : 60;
@@ -588,25 +583,21 @@ export default function Dashboard() {
         Total: TOTAL_QUESTIONS,
       });
 
-      // Estruturas para acumular dados
       const cluster0Data = { r1: 0, r2: 0, r3: 0, total: 0, count: 0 };
       const cluster1Data = { r1: 0, r2: 0, r3: 0, total: 0, count: 0 };
       const allData = { r1: 0, r2: 0, r3: 0, total: 0, count: 0 };
 
       predictions.forEach((p) => {
-        // Pegar ACERTOS de cada rodada
         const acertosR1 = Number(p.original_data["Q0401"] ?? 0);
         const acertosR2 = Number(p.original_data["Q0405"] ?? 0);
         const acertosR3 = Number(p.original_data["Q0409"] ?? 0);
         const totalAcertos = Number(p.original_data["Q0413"] ?? 0);
 
-        // Calcular percentuais usando os máximos detectados
         const percR1 = (acertosR1 / QUESTIONS_R1) * 100;
         const percR2 = (acertosR2 / QUESTIONS_R2) * 100;
         const percR3 = (acertosR3 / QUESTIONS_R3) * 100;
         const percTotal = (totalAcertos / TOTAL_QUESTIONS) * 100;
 
-        // Identificar cluster
         let cluster = -1;
         if (p.original_data["Cluster_0"] !== undefined) {
           cluster = Number(p.original_data["Cluster_0"]) === 1 ? 0 : 1;
@@ -614,7 +605,6 @@ export default function Dashboard() {
           cluster = Number(p.original_data["Cluster"]);
         }
 
-        // Acumular nos clusters
         if (cluster === 0) {
           cluster0Data.r1 += percR1;
           cluster0Data.r2 += percR2;
@@ -629,7 +619,6 @@ export default function Dashboard() {
           cluster1Data.count += 1;
         }
 
-        // Sempre acumular em "todos"
         allData.r1 += percR1;
         allData.r2 += percR2;
         allData.r3 += percR3;
@@ -637,7 +626,6 @@ export default function Dashboard() {
         allData.count += 1;
       });
 
-      // Adicionar clusters (se tiver dados significativos)
       if (
         cluster0Data.count > 0 &&
         cluster0Data.count > predictions.length * 0.05
@@ -668,7 +656,6 @@ export default function Dashboard() {
         });
       }
 
-      // Sempre adicionar "Todos os Jogadores"
       if (allData.count > 0) {
         performanceEvolutionData.push({
           id: "Todos os Jogadores",
@@ -789,7 +776,6 @@ export default function Dashboard() {
 
     const insights: string[] = [];
 
-    // Calcular R² médio
     const avgR2 =
       [
         results.r2_score_target1,
@@ -799,7 +785,6 @@ export default function Dashboard() {
         .filter((r): r is number => r !== null && r !== undefined)
         .reduce((sum, r) => sum + r, 0) / 3;
 
-    // Insight 1: Qualidade do Modelo
     if (avgR2 > 0.8) {
       insights.push(
         `O modelo apresenta alta capacidade de previsão, com score R² médio de ${avgR2.toFixed(
@@ -826,7 +811,6 @@ export default function Dashboard() {
       );
     }
 
-    // Insight 2: Performance Geral
     if (processedData.hasRoundData) {
       const percHits = processedData.percHits;
 
@@ -856,13 +840,11 @@ export default function Dashboard() {
         );
       }
     } else {
-      // Se não tiver dados de rodadas
       insights.push(
         `Foram analisados ${results.processed_rows} registros com múltiplas variáveis de comportamento e performance.`
       );
     }
 
-    // Insight 3: Evolução ao Longo das Rodadas
     if (processedData.performanceEvolutionData.length > 0) {
       const allPlayersData = processedData.performanceEvolutionData.find(
         (d) => d.id === "Todos os Jogadores"
@@ -898,7 +880,6 @@ export default function Dashboard() {
         );
       }
     } else {
-      // Insight alternativo se não tiver dados de evolução
       if (processedData.hasRoundData) {
         const percOmissions = processedData.percOmissions;
         if (percOmissions > 20) {
@@ -927,19 +908,15 @@ export default function Dashboard() {
       }
     }
 
-    // Garantir que temos exatamente 3 insights
     while (insights.length < 3) {
       insights.push(
         `Sistema processou ${results.processed_rows} registros de ${results.total_rows} no total.`
       );
     }
 
-    // Limitar a 3 insights
     return insights.slice(0, 3);
   }, [results, processedData]);
 
-  // Gerar recomendações baseadas nos dados
-  // Gerar descobertas baseadas nos dados (adaptado para contexto de jogo)
   const generateKeyFindings = useMemo(() => {
     if (!results) return [];
 
@@ -950,7 +927,6 @@ export default function Dashboard() {
       highlight?: string;
     }> = [];
 
-    // Descoberta 1: Perfis de Jogadores
     if (processedData.performanceEvolutionData.length >= 2) {
       const cluster0 = processedData.performanceEvolutionData.find(
         (d) => d.id === "Cluster 0"
@@ -960,7 +936,7 @@ export default function Dashboard() {
       );
 
       if (cluster0 && cluster1) {
-        const avgC0 = cluster0.data[3].y; // Total
+        const avgC0 = cluster0.data[3].y;
         const avgC1 = cluster1.data[3].y;
         const diff = Math.abs(avgC0 - avgC1);
 
@@ -987,7 +963,6 @@ export default function Dashboard() {
       }
     }
 
-    // Descoberta 2: Curva de Aprendizado
     if (processedData.performanceEvolutionData.length > 0) {
       const allPlayersData = processedData.performanceEvolutionData.find(
         (d) => d.id === "Todos os Jogadores"
@@ -1029,7 +1004,6 @@ export default function Dashboard() {
       }
     }
 
-    // Descoberta 3: Performance Geral
     if (processedData.hasRoundData) {
       if (processedData.percHits > 75) {
         findings.push({
@@ -1050,12 +1024,11 @@ export default function Dashboard() {
           type: "discovery",
           title: "Dificuldade Pode Estar Elevada",
           highlight: `${processedData.percHits.toFixed(1)}%`,
-          description: `Taxa de acerto abaixo de 60% sugere que o jogo pode estar muito difícil para o público-alvo. Considere analisar as questões com maior taxa de erro.`,
+          description: `Taxa de acerto abaixo de 60% sugere que o jogo pode estar muito difícil para o público-alvo.`,
         });
       }
     }
 
-    // Descoberta 4: Tempo vs Performance (se houver dados)
     if (processedData.tempoVsPerformanceData.length > 0) {
       findings.push({
         type: "pattern",
@@ -1064,17 +1037,15 @@ export default function Dashboard() {
       });
     }
 
-    // Descoberta 5: Taxa de Omissão
     if (processedData.hasRoundData && processedData.percOmissions > 15) {
       findings.push({
         type: "discovery",
         title: "Taxa de Omissões Elevada",
         highlight: `${processedData.percOmissions.toFixed(1)}%`,
-        description: `Mais de 15% das questões não foram respondidas. Isto pode indicar: tempo insuficiente, questões confusas ou falta de feedback claro sobre como responder. Revisar UI/UX das questões.`,
+        description: `Mais de 15% das questões não foram respondidas. Isto pode indicar: tempo insuficiente, questões confusas ou falta de feedback claro sobre como responder.`,
       });
     }
 
-    // Descoberta 6: Preferência de Cores (se houver dados)
     if (processedData.colorDistribution.length > 0) {
       const topColor = processedData.colorDistribution[0];
       const topColorPerc =
@@ -1096,7 +1067,6 @@ export default function Dashboard() {
       }
     }
 
-    // Se tudo está ótimo e não há descobertas negativas
     if (findings.filter((f) => f.type === "achievement").length >= 3) {
       findings.push({
         type: "achievement",
@@ -1105,7 +1075,6 @@ export default function Dashboard() {
       });
     }
 
-    // Limitar a 6 descobertas mais relevantes
     return findings.slice(0, 6);
   }, [results, processedData]);
 

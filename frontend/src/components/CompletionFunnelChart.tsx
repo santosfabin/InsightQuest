@@ -39,7 +39,6 @@ export default function CompletionFunnelChart({
         </h3>
         <p className="text-sm text-gray-500 mb-1">{subtitle}</p>
         
-        {/* Estatística de Drop-off */}
         <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-4 rounded-r-xl">
           <div className="flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-amber-600" />
@@ -55,7 +54,6 @@ export default function CompletionFunnelChart({
         </div>
       </div>
 
-      {/* Funil Visual */}
       <div className="space-y-3">
         {data.map((stage, index) => {
           const widthPercentage = (stage.count / maxCount) * 100;
@@ -66,14 +64,13 @@ export default function CompletionFunnelChart({
 
           return (
             <div key={index} className="relative">
-              {/* Barra do Funil */}
               <div className="relative">
                 <div
                   className="h-16 rounded-lg shadow-md transition-all duration-500 hover:shadow-lg flex items-center justify-between px-6"
                   style={{
                     width: `${widthPercentage}%`,
                     backgroundColor: stage.color,
-                    minWidth: '200px', // Garante legibilidade mesmo em estágios pequenos
+                    minWidth: '200px',
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -91,7 +88,6 @@ export default function CompletionFunnelChart({
                   </div>
                 </div>
 
-                {/* Indicador de Drop-off */}
                 {index > 0 && dropOff > 0 && (
                   <div className="absolute -right-2 top-1/2 transform translate-x-full -translate-y-1/2 ml-4">
                     <div className="bg-red-100 border border-red-300 rounded-lg px-3 py-1 shadow-sm">
@@ -103,7 +99,6 @@ export default function CompletionFunnelChart({
                 )}
               </div>
 
-              {/* Linha conectora (exceto último estágio) */}
               {!isLastStage && (
                 <div className="flex justify-center my-2">
                   <div className="w-0.5 h-4 bg-gray-300"></div>
@@ -114,7 +109,6 @@ export default function CompletionFunnelChart({
         })}
       </div>
 
-      {/* Legenda e Insights */}
       <div className="mt-6 pt-6 border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="bg-green-50 rounded-lg p-3">

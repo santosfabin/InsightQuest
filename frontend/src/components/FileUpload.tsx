@@ -45,7 +45,7 @@ export default function FileUpload({
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
       
-      // --- MUDANÇA 2 ---
+  
       if (droppedFile.name.endsWith('.csv') || droppedFile.name.endsWith('.xlsx')) {
         setFile(droppedFile);
       } else {
@@ -79,7 +79,6 @@ export default function FileUpload({
           >
             <input
               type="file"
-              // --- MUDANÇA 3 ---
               accept=".csv, .xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv"
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

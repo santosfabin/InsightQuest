@@ -1,7 +1,6 @@
-import React from "react"; // Import React for FC type
+import React from "react";
 import { ResponsiveBar, type BarTooltipProps } from "@nivo/bar";
 import { ResponsivePie, type PieTooltipProps } from "@nivo/pie";
-// 👇 CORRIGIDO: Importar PointTooltipProps corretamente
 import {
   ResponsiveLine,
   type PointTooltipProps as NivoPointTooltipProps,
@@ -20,7 +19,6 @@ import type {
   RoundTimeData,
 } from "../services/api";
 
-// ===== TIPOS DE DADOS =====
 interface ColorFamilyDetails {
   color: string;
   rule: string;
@@ -66,17 +64,17 @@ interface ScatterData {
   data: ScatterPoint[];
 }
 
-// 🆕 NOVO: Tipos para Evolução de Performance
+
 interface PerformanceEvolutionPoint {
-  x: string; // Rodada (R1, R2, R3, Total)
-  y: number; // Taxa de Acerto (%)
+  x: string;
+  y: number;
 }
 interface PerformanceEvolutionData {
-  id: string; // Cluster ID (e.g., 'Cluster 0')
+  id: string;
   data: PerformanceEvolutionPoint[];
 }
 
-// ===== TOOLTIP CUSTOMIZADO =====
+
 const CustomPieTooltip = ({ datum }: PieTooltipProps<PieSliceData>) => {
   const { label, value, color, details } = datum.data;
   return (
@@ -251,17 +249,15 @@ const CustomTempoVsPerformanceTooltip = ({
   );
 };
 
-// 👇 CORRIGIDO: Explicitamente tipar como React Function Component
 const CustomPerformanceEvolutionTooltip: React.FC<
   NivoPointTooltipProps<PerformanceEvolutionData>
 > = ({ point }) => {
-  // O objeto 'point' contém as informações do ponto específico que foi interagido
   return (
     <div
       style={{
         padding: "10px 14px",
         background: "white",
-        border: `2px solid ${point.seriesColor}`, // Corrigido para seriesColor
+        border: `2px solid ${point.seriesColor}`,
         boxShadow: "0 3px 8px rgba(0,0,0,0.2)",
         borderRadius: "6px",
         fontSize: "13px",
@@ -276,7 +272,7 @@ const CustomPerformanceEvolutionTooltip: React.FC<
           fontSize: "14px",
         }}
       >
-        {point.seriesId} {/* Corrigido para seriesId */}
+        {point.seriesId} 
       </p>
       <div style={{ color: "#333", lineHeight: "1.6" }}>
         <div
@@ -287,7 +283,6 @@ const CustomPerformanceEvolutionTooltip: React.FC<
           }}
         >
           <strong>Rodada:</strong>
-          {/* Acessar data.xFormatted para o valor formatado do eixo x */}
           <span style={{ marginLeft: "8px" }}>{point.data.xFormatted}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -299,7 +294,6 @@ const CustomPerformanceEvolutionTooltip: React.FC<
               fontWeight: "bold",
             }}
           >
-            {/* Acessar data.yFormatted para o valor formatado do eixo y */}
             {Number(point.data.yFormatted).toFixed(1)}%
           </span>
         </div>
@@ -771,7 +765,6 @@ export function TempoVsPerformanceChart({ data }: { data: ScatterData[] }) {
   );
 }
 
-// 🆕 NOVO COMPONENTE: Evolução de Performance por Rodada
 export function PerformanceEvolutionChart({
   data,
 }: {
@@ -802,7 +795,7 @@ export function PerformanceEvolutionChart({
             stacked: false,
             reverse: false,
           }}
-          yFormat=" >-.1f" // Formato para tooltip
+          yFormat=" >-.1f"
           curve="monotoneX"
           axisTop={null}
           axisRight={null}
@@ -821,7 +814,7 @@ export function PerformanceEvolutionChart({
             legend: "Taxa de Acerto (%)",
             legendOffset: -60,
             legendPosition: "middle",
-            format: (v) => `${v}%`, // Formato para o eixo Y
+            format: (v) => `${v}%`,
           }}
           enableGridX={false}
           colors={{ scheme: "category10" }}
