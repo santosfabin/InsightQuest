@@ -1,16 +1,12 @@
-// frontend/src/pages/Dashboard.tsx
 import { useState, useMemo } from "react";
 import {
   BarChart3,
   Clock,
   Upload,
-  FileSpreadsheet,
-  Target,
   AlertCircle,
   Eye,
   EyeOff,
   Hourglass,
-  Users,
   CheckCircle,
   XCircle,
 } from "lucide-react";
@@ -19,6 +15,11 @@ import StatCard from "../components/StatCard";
 import FileUpload from "../components/FileUpload";
 import TargetCard from "../components/TargetCard";
 import PredictionsTable from "../components/PredictionsTable";
+import InsightCard from "../components/InsightCard";
+import NarrativeSection from "../components/NarrativeSection";
+import ExecutiveSummary from "../components/ExecutiveSummary";
+import KeyFindings from "../components/KeyFindings";
+import CompletionFunnelChart from "../components/Completionfunnelchart";
 import {
   GenericPieChart,
   DistributionChart,
@@ -38,8 +39,7 @@ import HistoryList from "../components/HistoryList";
 import { addHistoryEntry } from "../services/db";
 import type { HistoryEntry } from "../services/db";
 
-// ... (interfaces e funções getColorFamily, rgbToHsl, colorFamilyDetails permanecem iguais) ...
-
+// ... (interfaces permanecem iguais) ...
 interface ColorFamilyDetails {
   color: string;
   rule: string;
@@ -71,13 +71,6 @@ interface TargetStatsData {
   std: number;
   distribution: string;
 }
-interface ClusterComparisonData {
-  cluster: string;
-  avgTarget1: number;
-  avgTarget2: number;
-  avgTarget3: number;
-  [key: string]: string | number;
-}
 interface ScatterPoint {
   x: number;
   y: number;
@@ -86,19 +79,19 @@ interface ScatterPoint {
   cluster?: number;
 }
 interface ScatterData {
-  id: string; // Geralmente 'Cluster 0' ou 'Cluster 1' para este novo gráfico
+  id: string;
   data: ScatterPoint[];
 }
 interface PerformanceEvolutionPoint {
   x: string;
   y: number;
 }
-
 interface PerformanceEvolutionData {
   id: string;
   data: PerformanceEvolutionPoint[];
 }
 
+// ... (funções getColorFamily, rgbToHsl, colorFamilyDetails permanecem iguais) ...
 const rgbToHsl = (
   r: number,
   g: number,
@@ -217,7 +210,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showDetailsTable, setShowDetailsTable] = useState(false);
 
-  // ... (handleProcess, handleLoadFromHistory, handleNewAnalysis, toggleDetailsTable permanecem iguais) ...
+  // ... (handlers permanecem iguais) ...
   const handleProcess = async () => {
     if (!file) {
       setError("Nenhum arquivo selecionado.");
@@ -247,7 +240,7 @@ export default function Dashboard() {
   };
   const handleLoadFromHistory = (entry: HistoryEntry) => {
     const historicalFile = new File([], entry.fileName, {
-      type: "text/csv", // Ou o tipo correto se você salvou
+      type: "text/csv",
     });
     setFile(historicalFile);
     setResults(entry.results);
@@ -278,8 +271,6 @@ export default function Dashboard() {
       timeDistribution: [] as DistributionBin[],
       colorDistribution: [] as PieSliceData[],
       likertDistribution: [] as LikertData[],
-      clusterDistribution: [] as PieSliceData[],
-      clusterComparison: [] as ClusterComparisonData[],
       scatterDataT1: null as ScatterData[] | null,
       scatterDataT2: null as ScatterData[] | null,
       scatterDataT3: null as ScatterData[] | null,
@@ -293,8 +284,14 @@ export default function Dashboard() {
       rawOmissions: 0,
       hasRoundData: false,
       tempoVsPerformanceData: [] as ScatterData[],
-	  performanceEvolutionData: [] as PerformanceEvolutionData[],
+      performanceEvolutionData: [] as PerformanceEvolutionData[],
       timeCol: "T0498",
+      funnelData: [] as Array<{
+        stage: string;
+        count: number;
+        percentage: number;
+        color: string;
+      }>,
     };
 
     if (!results?.predictions) return defaults;
@@ -302,7 +299,6 @@ export default function Dashboard() {
     const playerCount = predictions.length;
     if (playerCount === 0) return defaults;
 
-    // ... (cálculos de avgTarget1/2/3, stdDevTarget1/2/3 permanecem iguais) ...
     const sumT1 = predictions.reduce(
       (s, p) => s + (p.PREDICAO_Target1 || 0),
       0
@@ -337,12 +333,11 @@ export default function Dashboard() {
     const stdDevTarget2 = calculateStdDev(predT2, avgTarget2);
     const stdDevTarget3 = calculateStdDev(predT3, avgTarget3);
 
-    // --- Time Distribution (usando TempoTotal se existir, senão T0498 como fallback) ---
     const timeCol =
       predictions.length > 0 &&
       predictions[0].original_data["TempoTotal"] !== undefined
         ? "TempoTotal"
-        : "T0498"; // Usa T0498 se TempoTotal não existir
+        : "T0498";
     const tempos = predictions
       .map((p) => p.original_data[timeCol])
       .filter((t): t is number => typeof t === "number" && !isNaN(t));
@@ -350,7 +345,7 @@ export default function Dashboard() {
     let timeDistribution: DistributionBin[] = [];
     if (tempos.length > 0) {
       const maxTime = Math.max(...tempos);
-      const binSize = Math.max(1, Math.ceil(maxTime / 6 / 10) * 10); // Evita binSize 0
+      const binSize = Math.max(1, Math.ceil(maxTime / 6 / 10) * 10);
       const timeBins: { [key: string]: number } = {};
       tempos.forEach((t) => {
         const binStart = Math.floor(t / binSize) * binSize;
@@ -365,7 +360,6 @@ export default function Dashboard() {
         );
     }
 
-    // ... (cálculos de colorDistribution e likertDistribution permanecem iguais) ...
     const colorFamilyCounts: { [key: string]: number } = {};
     predictions.forEach((p) => {
       Object.keys(p.original_data)
@@ -396,6 +390,7 @@ export default function Dashboard() {
         color: colorFamilyDetails[family]?.color || "#64748b",
       }))
       .sort((a, b) => b.value - a.value);
+
     const likertCols = [
       "F0705",
       "F0706",
@@ -428,7 +423,6 @@ export default function Dashboard() {
       })
     );
 
-    // ... (cálculo de scatterDataT1/2/3 para Predição vs Real permanece igual) ...
     let scatterDataT1: ScatterData[] | null = null;
     let scatterDataT2: ScatterData[] | null = null;
     let scatterDataT3: ScatterData[] | null = null;
@@ -464,8 +458,6 @@ export default function Dashboard() {
       if (dataT3.length > 0) scatterDataT3 = [{ id: "Target 3", data: dataT3 }];
     }
 
-    // --- **INÍCIO DA CORREÇÃO** ---
-    // --- Lógica para os 4 Cards e Gráfico TempoVsPerformance ---
     let avgTimeAll = 0;
     let percHits = 0;
     let percErrors = 0;
@@ -475,35 +467,28 @@ export default function Dashboard() {
     let rawOmissions = 0;
     const tempoVsPerformanceData: ScatterData[] = [];
 
-    // **FIX 1: Flag separada para os 4 cards**
     const hasRoundData =
       predictions.length > 0 &&
-      predictions[0].original_data["Q0413"] !== undefined && // Acertos Total
-      predictions[0].original_data["Q0414"] !== undefined && // Erros Total
-      predictions[0].original_data["Q0415"] !== undefined && // Omissões Total
-      predictions[0].original_data["T0498"] !== undefined; // Tempo Total (para cards)
+      predictions[0].original_data["Q0413"] !== undefined &&
+      predictions[0].original_data["Q0414"] !== undefined &&
+      predictions[0].original_data["Q0415"] !== undefined &&
+      predictions[0].original_data["T0498"] !== undefined;
 
-    // **FIX 2: Flag separada para o gráfico de performance**
-    // (Depende das colunas dos cards + a coluna de Cluster)
     const hasTempoVsPerfData =
-      hasRoundData && predictions[0].original_data["Cluster_0"] !== undefined; // Cluster (para cor do gráfico)
+      hasRoundData && predictions[0].original_data["Cluster_0"] !== undefined;
 
-    // **FIX 3: Processar o loop se hasRoundData for true**
-    // Os dados do TempoVsPerf serão preenchidos *dentro* do loop se hasTempoVsPerfData for true
     if (hasRoundData) {
-      let totalTimeSumT0498 = 0; // Soma para a média do card
+      let totalTimeSumT0498 = 0;
       const cluster0Points: ScatterPoint[] = [];
       const cluster1Points: ScatterPoint[] = [];
 
       predictions.forEach((p, index) => {
         try {
-          // --- Lógica para os 4 Cards (Sempre executa se hasRoundData) ---
           rawHits += Number(p.original_data["Q0413"] ?? 0);
           rawErrors += Number(p.original_data["Q0414"] ?? 0);
           rawOmissions += Number(p.original_data["Q0415"] ?? 0);
           totalTimeSumT0498 += Number(p.original_data["T0498"] ?? 0);
 
-          // --- Lógica para o gráfico (SÓ executa se hasTempoVsPerfData) ---
           if (hasTempoVsPerfData) {
             const tempo = Number(p.original_data["T0498"] ?? 0);
             const acertos = Number(p.original_data["Q0413"] ?? 0);
@@ -523,11 +508,9 @@ export default function Dashboard() {
           }
         } catch (error) {
           console.error(`ERROR inside loop at index ${index}:`, error);
-          console.error("Data at error:", p.original_data);
         }
       });
 
-      // --- Cálculos Pós-Loop (para os 4 cards) ---
       const totalInteractions = rawHits + rawErrors + rawOmissions;
       avgTimeAll = playerCount > 0 ? totalTimeSumT0498 / playerCount : 0;
 
@@ -537,7 +520,6 @@ export default function Dashboard() {
         percOmissions = (rawOmissions / totalInteractions) * 100;
       }
 
-      // --- Formatação Pós-Loop (para o gráfico) ---
       if (hasTempoVsPerfData) {
         if (cluster0Points.length > 0) {
           tempoVsPerformanceData.push({
@@ -554,65 +536,7 @@ export default function Dashboard() {
       }
     }
 
-    const hasTempoVsPerformanceData =
-      predictions.length > 0 &&
-      predictions[0].original_data["TempoTotal"] !== undefined &&
-      predictions[0].original_data["Q0413"] !== undefined;
-
-    if (hasTempoVsPerformanceData) {
-      const cluster0Points: ScatterPoint[] = [];
-      const cluster1Points: ScatterPoint[] = [];
-      const clusterNullPoints: ScatterPoint[] = [];
-
-      predictions.forEach((p, index) => {
-        const tempo = Number(p.original_data["TempoTotal"] ?? 0);
-        const acertos = Number(p.original_data["Q0413"] ?? 0);
-        const player = String(
-          p.original_data["Código de Acesso"] ?? `Player_${index + 1}`
-        );
-        const target1 = p.PREDICAO_Target1;
-
-        let cluster = -1;
-        if (p.original_data["Cluster_0"] !== undefined) {
-          cluster = Number(p.original_data["Cluster_0"]) === 1 ? 0 : 1;
-        }
-
-        if (tempo >= 0 && acertos >= 0) {
-          const point: ScatterPoint = {
-            x: tempo,
-            y: acertos,
-            player: player,
-            target1: target1 ?? undefined,
-            cluster: cluster !== -1 ? cluster : undefined,
-          };
-
-          if (cluster === 0) {
-            cluster0Points.push(point);
-          } else if (cluster === 1) {
-            cluster1Points.push(point);
-          } else {
-            clusterNullPoints.push(point);
-          }
-        }
-      });
-
-      if (cluster0Points.length > 0) {
-        tempoVsPerformanceData.push({ id: "Cluster 0", data: cluster0Points });
-      }
-      if (cluster1Points.length > 0) {
-        tempoVsPerformanceData.push({ id: "Cluster 1", data: cluster1Points });
-      }
-      if (clusterNullPoints.length > 0) {
-        tempoVsPerformanceData.push({
-          id: "Sem Cluster",
-          data: clusterNullPoints,
-        });
-      }
-    }
-
     const performanceEvolutionData: PerformanceEvolutionData[] = [];
-
-    // Verifica se as colunas de rodadas existem
     const hasPerformanceEvolutionData =
       predictions.length > 0 &&
       predictions[0].original_data["Q0301"] !== undefined &&
@@ -621,28 +545,22 @@ export default function Dashboard() {
       predictions[0].original_data["Q0413"] !== undefined;
 
     if (hasPerformanceEvolutionData) {
-      // Arrays para acumular dados por cluster
       const cluster0Data = { r1: 0, r2: 0, r3: 0, total: 0, count: 0 };
       const cluster1Data = { r1: 0, r2: 0, r3: 0, total: 0, count: 0 };
       const allData = { r1: 0, r2: 0, r3: 0, total: 0, count: 0 };
 
       predictions.forEach((p) => {
-        // Pega os acertos de cada rodada (são porcentagens já)
         const r1 = Number(p.original_data["Q0301"] ?? 0);
         const r2 = Number(p.original_data["Q0302"] ?? 0);
         const r3 = Number(p.original_data["Q0303"] ?? 0);
         const totalAcertos = Number(p.original_data["Q0413"] ?? 0);
-
-        // Calcula taxa de acerto total (assumindo 60 questões totais)
         const totalPercentage = (totalAcertos / 60) * 100;
 
-        // Detecta o cluster
         let cluster = -1;
         if (p.original_data["Cluster_0"] !== undefined) {
           cluster = Number(p.original_data["Cluster_0"]) === 1 ? 0 : 1;
         }
 
-        // Acumula por cluster
         if (cluster === 0) {
           cluster0Data.r1 += r1;
           cluster0Data.r2 += r2;
@@ -657,7 +575,6 @@ export default function Dashboard() {
           cluster1Data.count += 1;
         }
 
-        // Acumula total
         allData.r1 += r1;
         allData.r2 += r2;
         allData.r3 += r3;
@@ -665,7 +582,6 @@ export default function Dashboard() {
         allData.count += 1;
       });
 
-      // Calcula médias e formata para o gráfico
       if (cluster0Data.count > 0) {
         performanceEvolutionData.push({
           id: "Cluster 0",
@@ -690,7 +606,6 @@ export default function Dashboard() {
         });
       }
 
-      // Adiciona linha "Todos" (média geral)
       if (allData.count > 0) {
         performanceEvolutionData.push({
           id: "Todos os Jogadores",
@@ -704,6 +619,81 @@ export default function Dashboard() {
       }
     }
 
+    // --- Dados para Funil de Completion ---
+    const funnelData: Array<{
+      stage: string;
+      count: number;
+      percentage: number;
+      color: string;
+    }> = [];
+
+    // Só calcular se tivermos dados de rodadas
+    if (hasRoundData && predictions.length > 0) {
+      const totalIniciaram = predictions.length;
+
+      // Contar quantos completaram cada rodada
+      // Assumindo que se tem dados de Q0401-Q0403 (R1), Q0405-Q0407 (R2), Q0409-Q0411 (R3)
+      const completedR1 = predictions.filter(
+        (p) =>
+          p.original_data["Q0401"] !== undefined &&
+          p.original_data["Q0402"] !== undefined &&
+          p.original_data["Q0403"] !== undefined &&
+          Number(p.original_data["Q0401"]) +
+            Number(p.original_data["Q0402"]) +
+            Number(p.original_data["Q0403"]) >
+            0
+      ).length;
+
+      const completedR2 = predictions.filter(
+        (p) =>
+          p.original_data["Q0405"] !== undefined &&
+          p.original_data["Q0406"] !== undefined &&
+          p.original_data["Q0407"] !== undefined &&
+          Number(p.original_data["Q0405"]) +
+            Number(p.original_data["Q0406"]) +
+            Number(p.original_data["Q0407"]) >
+            0
+      ).length;
+
+      const completedR3 = predictions.filter(
+        (p) =>
+          p.original_data["Q0409"] !== undefined &&
+          p.original_data["Q0410"] !== undefined &&
+          p.original_data["Q0411"] !== undefined &&
+          Number(p.original_data["Q0409"]) +
+            Number(p.original_data["Q0410"]) +
+            Number(p.original_data["Q0411"]) >
+            0
+      ).length;
+
+      funnelData.push(
+        {
+          stage: "Iniciaram",
+          count: totalIniciaram,
+          percentage: 100,
+          color: "#3b82f6", // Azul
+        },
+        {
+          stage: "Completaram Rodada 1",
+          count: completedR1,
+          percentage: (completedR1 / totalIniciaram) * 100,
+          color: "#8b5cf6", // Roxo
+        },
+        {
+          stage: "Completaram Rodada 2",
+          count: completedR2,
+          percentage: (completedR2 / totalIniciaram) * 100,
+          color: "#ec4899", // Rosa
+        },
+        {
+          stage: "Completaram Rodada 3",
+          count: completedR3,
+          percentage: (completedR3 / totalIniciaram) * 100,
+          color: "#10b981", // Verde
+        }
+      );
+    }
+
     return {
       avgTarget1,
       avgTarget2,
@@ -711,8 +701,6 @@ export default function Dashboard() {
       timeDistribution,
       colorDistribution,
       likertDistribution,
-      clusterDistribution: [],
-      clusterComparison: [],
       scatterDataT1,
       scatterDataT2,
       scatterDataT3,
@@ -731,8 +719,301 @@ export default function Dashboard() {
       tempoVsPerformanceData,
       performanceEvolutionData,
       timeCol,
+      funnelData,
     };
   }, [results]);
+
+const generateInsights = useMemo(() => {
+  if (!results) return [];
+  
+  const insights: string[] = [];
+  
+  // Calcular R² médio
+  const avgR2 = [results.r2_score_target1, results.r2_score_target2, results.r2_score_target3]
+    .filter((r): r is number => r !== null && r !== undefined)
+    .reduce((sum, r) => sum + r, 0) / 3;
+  
+  // Insight 1: Qualidade do Modelo
+  if (avgR2 > 0.8) {
+    insights.push(
+      `O modelo apresenta alta capacidade de previsão, com score R² médio de ${avgR2.toFixed(3)}.`
+    );
+  } else if (avgR2 > 0.6) {
+    insights.push(
+      `O modelo apresenta boa capacidade de previsão, com score R² médio de ${avgR2.toFixed(3)}.`
+    );
+  } else if (avgR2 > 0.4) {
+    insights.push(
+      `O modelo apresenta capacidade moderada de previsão, com score R² médio de ${avgR2.toFixed(3)}.`
+    );
+  } else {
+    insights.push(
+      `O modelo tem capacidade limitada de previsão, com score R² médio de ${avgR2.toFixed(3)}.`
+    );
+  }
+  
+  // Insight 2: Performance Geral
+  if (processedData.hasRoundData) {
+    const percHits = processedData.percHits;
+    
+    if (percHits > 75) {
+      insights.push(
+        `Taxa de acerto de ${percHits.toFixed(1)}% indica desempenho forte do grupo analisado.`
+      );
+    } else if (percHits > 60) {
+      insights.push(
+        `Taxa de acerto de ${percHits.toFixed(1)}% indica desempenho adequado do grupo analisado.`
+      );
+    } else if (percHits > 40) {
+      insights.push(
+        `Taxa de acerto de ${percHits.toFixed(1)}% indica espaço para melhoria no grupo analisado.`
+      );
+    } else {
+      insights.push(
+        `Taxa de acerto de ${percHits.toFixed(1)}% sugere dificuldades significativas no grupo analisado.`
+      );
+    }
+  } else {
+    // Se não tiver dados de rodadas
+    insights.push(
+      `Foram analisados ${results.processed_rows} registros com múltiplas variáveis de comportamento e performance.`
+    );
+  }
+  
+  // Insight 3: Evolução ao Longo das Rodadas
+  if (processedData.performanceEvolutionData.length > 0) {
+    const allPlayersData = processedData.performanceEvolutionData.find(
+      d => d.id === "Todos os Jogadores"
+    );
+    
+    if (allPlayersData && allPlayersData.data.length >= 3) {
+      const r1 = allPlayersData.data[0].y;
+      const r3 = allPlayersData.data[2].y;
+      const improvement = r3 - r1;
+      
+      if (improvement > 5) {
+        insights.push(
+          `Evolução positiva de ${improvement.toFixed(1)}% da primeira para a última rodada demonstra progressão consistente.`
+        );
+      } else if (improvement < -5) {
+        insights.push(
+          `Queda de ${Math.abs(improvement).toFixed(1)}% entre rodadas pode indicar aumento de dificuldade ou fadiga.`
+        );
+      } else {
+        insights.push(
+          `Performance manteve-se estável ao longo das rodadas (variação de ${Math.abs(improvement).toFixed(1)}%).`
+        );
+      }
+    } else {
+      insights.push(
+        `Dados de evolução ao longo das rodadas disponíveis para análise detalhada.`
+      );
+    }
+  } else {
+    // Insight alternativo se não tiver dados de evolução
+    if (processedData.hasRoundData) {
+      const percOmissions = processedData.percOmissions;
+      if (percOmissions > 20) {
+        insights.push(
+          `Taxa de omissão de ${percOmissions.toFixed(1)}% indica que muitas questões não foram respondidas.`
+        );
+      } else if (percOmissions > 10) {
+        insights.push(
+          `Taxa de omissão de ${percOmissions.toFixed(1)}% está dentro do esperado para este tipo de análise.`
+        );
+      } else {
+        insights.push(
+          `Baixa taxa de omissão (${percOmissions.toFixed(1)}%) indica alto engajamento dos participantes.`
+        );
+      }
+    } else {
+      insights.push(
+        `Análise detalhada de múltiplas dimensões de comportamento e performance disponível.`
+      );
+    }
+  }
+  
+  // Garantir que temos exatamente 3 insights
+  while (insights.length < 3) {
+    insights.push(
+      `Sistema processou ${results.processed_rows} registros de ${results.total_rows} no total.`
+    );
+  }
+  
+  // Limitar a 3 insights
+  return insights.slice(0, 3);
+}, [results, processedData]);
+
+  // Gerar recomendações baseadas nos dados
+  // Gerar descobertas baseadas nos dados (adaptado para contexto de jogo)
+  const generateKeyFindings = useMemo(() => {
+    if (!results) return [];
+
+    const findings: Array<{
+      type: "insight" | "pattern" | "achievement" | "discovery";
+      title: string;
+      description: string;
+      highlight?: string;
+    }> = [];
+
+    // Descoberta 1: Perfis de Jogadores
+    if (processedData.performanceEvolutionData.length >= 2) {
+      const cluster0 = processedData.performanceEvolutionData.find(
+        (d) => d.id === "Cluster 0"
+      );
+      const cluster1 = processedData.performanceEvolutionData.find(
+        (d) => d.id === "Cluster 1"
+      );
+
+      if (cluster0 && cluster1) {
+        const avgC0 = cluster0.data[3].y; // Total
+        const avgC1 = cluster1.data[3].y;
+        const diff = Math.abs(avgC0 - avgC1);
+
+        if (diff > 10) {
+          findings.push({
+            type: "pattern",
+            title: "Perfis Distintos de Jogadores Identificados",
+            highlight: `${diff.toFixed(1)}% de diferença`,
+            description: `Cluster 0 (${cluster0.data[3].y.toFixed(
+              1
+            )}% acertos) vs Cluster 1 (${cluster1.data[3].y.toFixed(
+              1
+            )}% acertos) mostram estratégias significativamente diferentes. Ambos são válidos, indicando que o jogo aceita múltiplos estilos de gameplay.`,
+          });
+        } else {
+          findings.push({
+            type: "achievement",
+            title: "Balanceamento Excelente Entre Perfis",
+            description: `Clusters apresentam performance similar (diferença de apenas ${diff.toFixed(
+              1
+            )}%), indicando que diferentes estratégias são igualmente viáveis. Isto demonstra excelente design de gameplay.`,
+          });
+        }
+      }
+    }
+
+    // Descoberta 2: Curva de Aprendizado
+    if (processedData.performanceEvolutionData.length > 0) {
+      const allPlayersData = processedData.performanceEvolutionData.find(
+        (d) => d.id === "Todos os Jogadores"
+      );
+      if (allPlayersData) {
+        const r1 = allPlayersData.data[0].y;
+        const r3 = allPlayersData.data[2].y;
+        const improvement = r3 - r1;
+
+        if (improvement > 5) {
+          findings.push({
+            type: "achievement",
+            title: "Curva de Aprendizado Positiva Confirmada",
+            highlight: `+${improvement.toFixed(1)}% de melhoria`,
+            description: `Jogadores melhoraram ${improvement.toFixed(
+              1
+            )}% da Rodada 1 para Rodada 3, demonstrando que a progressão de dificuldade está bem calibrada e permite aprendizado efetivo.`,
+          });
+        } else if (improvement < -5) {
+          findings.push({
+            type: "discovery",
+            title: "Fadiga ou Aumento Brusco de Dificuldade",
+            highlight: `${improvement.toFixed(1)}% de queda`,
+            description: `Performance caiu ${Math.abs(improvement).toFixed(
+              1
+            )}% da Rodada 1 para Rodada 3. Isto pode indicar fadiga dos jogadores ou aumento desproporcional de dificuldade na última rodada.`,
+          });
+        } else {
+          findings.push({
+            type: "insight",
+            title: "Performance Consistente Ao Longo das Rodadas",
+            description: `Taxa de acerto se manteve estável (variação de apenas ${Math.abs(
+              improvement
+            ).toFixed(
+              1
+            )}%), indicando dificuldade uniforme ou que jogadores já dominavam o conteúdo desde o início.`,
+          });
+        }
+      }
+    }
+
+    // Descoberta 3: Performance Geral
+    if (processedData.hasRoundData) {
+      if (processedData.percHits > 75) {
+        findings.push({
+          type: "achievement",
+          title: "Taxa de Acerto Excelente",
+          highlight: `${processedData.percHits.toFixed(1)}%`,
+          description: `Taxa de acerto acima de 75% indica que os jogadores estão dominando bem o conteúdo. O jogo está acessível mas ainda oferece desafio adequado.`,
+        });
+      } else if (processedData.percHits > 60) {
+        findings.push({
+          type: "insight",
+          title: "Nível de Dificuldade no Sweet Spot",
+          highlight: `${processedData.percHits.toFixed(1)}%`,
+          description: `Taxa de acerto entre 60-75% indica equilíbrio ideal entre desafio e frustração. Jogadores sentem-se desafiados mas conseguem progredir.`,
+        });
+      } else {
+        findings.push({
+          type: "discovery",
+          title: "Dificuldade Pode Estar Elevada",
+          highlight: `${processedData.percHits.toFixed(1)}%`,
+          description: `Taxa de acerto abaixo de 60% sugere que o jogo pode estar muito difícil para o público-alvo. Considere analisar as questões com maior taxa de erro.`,
+        });
+      }
+    }
+
+    // Descoberta 4: Tempo vs Performance (se houver dados)
+    if (processedData.tempoVsPerformanceData.length > 0) {
+      findings.push({
+        type: "pattern",
+        title: "Relação Entre Velocidade e Precisão",
+        description: `O gráfico Tempo vs Performance revela como diferentes estratégias de velocidade impactam os resultados. Jogadores mais rápidos não necessariamente têm pior desempenho, indicando que habilidade compensa pela pressa.`,
+      });
+    }
+
+    // Descoberta 5: Taxa de Omissão
+    if (processedData.hasRoundData && processedData.percOmissions > 15) {
+      findings.push({
+        type: "discovery",
+        title: "Taxa de Omissões Elevada",
+        highlight: `${processedData.percOmissions.toFixed(1)}%`,
+        description: `Mais de 15% das questões não foram respondidas. Isto pode indicar: tempo insuficiente, questões confusas ou falta de feedback claro sobre como responder. Revisar UI/UX das questões.`,
+      });
+    }
+
+    // Descoberta 6: Preferência de Cores (se houver dados)
+    if (processedData.colorDistribution.length > 0) {
+      const topColor = processedData.colorDistribution[0];
+      const topColorPerc =
+        (topColor.value /
+          processedData.colorDistribution.reduce((s, c) => s + c.value, 0)) *
+        100;
+
+      if (topColorPerc > 40) {
+        findings.push({
+          type: "insight",
+          title: "Forte Preferência por Cor Específica",
+          highlight: `${topColor.label}: ${topColorPerc.toFixed(1)}%`,
+          description: `Jogadores têm clara preferência por ${
+            topColor.label
+          } (${topColorPerc.toFixed(
+            1
+          )}% das escolhas). Isto pode refletir: design visual mais atraente desta cor, associação psicológica, ou viés cultural do público.`,
+        });
+      }
+    }
+
+    // Se tudo está ótimo e não há descobertas negativas
+    if (findings.filter((f) => f.type === "achievement").length >= 3) {
+      findings.push({
+        type: "achievement",
+        title: "Gameplay Bem Projetado",
+        description: `Múltiplos indicadores positivos (curva de aprendizado, balanceamento, taxa de acerto) confirmam que o design de gameplay está funcionando conforme o esperado. Jogadores estão engajados e progredindo adequadamente.`,
+      });
+    }
+
+    // Limitar a 6 descobertas mais relevantes
+    return findings.slice(0, 6);
+  }, [results, processedData]);
 
   const processedSuccessfully = results?.processed_rows ?? 0;
   const displayPredictions: ApiPredictionRow[] = results?.predictions ?? [];
@@ -759,7 +1040,6 @@ export default function Dashboard() {
         <main className="max-w-7xl mx-auto px-8 py-8">
           {activeTab === "dashboard" && (
             <>
-              {/* ... (renderização de erro, tela inicial, FileUpload) ... */}
               {error && (
                 <div
                   className="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md"
@@ -774,6 +1054,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+
               {!results && !showUpload ? (
                 <div className="flex items-center justify-center min-h-[calc(100vh-250px)]">
                   <div className="text-center">
@@ -781,11 +1062,11 @@ export default function Dashboard() {
                       <BarChart3 className="w-12 h-12 text-purple-600" />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-800 mb-3">
-                      Dashboard
+                      Dashboard Analítico
                     </h2>
                     <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                      Visão geral das suas análises preditivas. Comece enviando
-                      um arquivo CSV ou xlsl para análise.
+                      Transforme seus dados em insights acionáveis através de
+                      Machine Learning
                     </p>
                     <button
                       onClick={handleNewAnalysis}
@@ -808,265 +1089,330 @@ export default function Dashboard() {
                   }}
                 />
               ) : results ? (
-                <div className="space-y-10">
-                  {/* ... (Header da análise: Título, nome do arquivo, botão Nova Análise) ... */}
-                  <div className="flex items-center justify-between pb-6 border-b border-purple-200">
-                    <div>
-                      <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                        <BarChart3 className="w-8 h-8 text-purple-600" />{" "}
-                        Dashboard - Resultados da Análise
-                      </h2>
-                      <p className="text-gray-500 mt-1">
-                        Análise concluída para o arquivo:{" "}
-                        <span className="font-medium text-gray-700">
-                          {file?.name ?? "Desconhecido"}
-                        </span>
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleNewAnalysis}
-                      className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/40"
-                    >
-                      <Upload className="w-5 h-5 inline mr-2" /> Nova Análise
-                    </button>
-                  </div>
-                  {/* ... (Cards Total Linhas, Linhas Processadas) ... */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <StatCard
-                      icon={FileSpreadsheet}
-                      title="Total de Linhas"
-                      value={results.total_rows.toString()}
-                      subtitle="No arquivo enviado"
-                      iconBg="bg-gradient-to-br from-blue-100 to-blue-200"
-                      iconColor="text-blue-600"
-                    />
-                    <StatCard
-                      icon={Users}
-                      title="Linhas Processadas"
-                      value={processedSuccessfully.toString()}
-                      subtitle="Jogadores analisados pela API"
-                      iconBg="bg-gradient-to-br from-purple-100 to-purple-200"
-                      iconColor="text-purple-600"
-                    />
-                  </div>
-                  <section>
-                    <div className="mb-6 text-center">
-                      <h2 className="text-2xl font-semibold text-gray-700 mb-2 flex items-center justify-center gap-2">
-                        <Hourglass className="w-6 h-6 text-blue-500" />{" "}
-                        Entendendo os Dados de Entrada
-                      </h2>
-                      <p className="text-gray-500 text-sm max-w-xl mx-auto">
-                        Explorando as características dos dados enviados.
-                      </p>
+                <div className="space-y-12">
+                  {/* RESUMO EXECUTIVO */}
+                  <ExecutiveSummary
+                    fileName={file?.name ?? "Arquivo Desconhecido"}
+                    totalRows={results.total_rows}
+                    processedRows={processedSuccessfully}
+                    avgTarget1={processedData.avgTarget1}
+                    avgTarget2={processedData.avgTarget2}
+                    avgTarget3={processedData.avgTarget3}
+                    r2_target1={results.r2_score_target1}
+                    r2_target2={results.r2_score_target2}
+                    r2_target3={results.r2_score_target3}
+                    keyInsights={generateInsights}
+                  />
+
+                  {/* SEÇÃO 1: CONTEXTO DOS DADOS */}
+                  <NarrativeSection
+                    id="context"
+                    number="1"
+                    title="Contexto dos Dados de Entrada"
+                    subtitle="Entendendo o perfil do dataset analisado"
+                    summary={`Analisamos ${processedSuccessfully} registros com múltiplas variáveis comportamentais e de performance.`}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <InsightCard
+                        type="info"
+                        title="Volume de Dados Analisados"
+                        metric={`${processedSuccessfully} registros`}
+                        description="Quantidade de linhas que foram processadas e analisadas pelo sistema. Quanto mais dados, mais confiáveis tendem a ser os resultados estatísticos."
+                        context={`${(
+                          (processedSuccessfully / results.total_rows) *
+                          100
+                        ).toFixed(1)}% do total foi processado com sucesso`}
+                      />
+
+                      {processedData.hasRoundData && (
+                        <InsightCard
+                          type={
+                            processedData.percHits > 70
+                              ? "success"
+                              : processedData.percHits > 50
+                              ? "info"
+                              : "warning"
+                          }
+                          title="Performance Geral do Grupo"
+                          metric={`${processedData.percHits.toFixed(1)}%`}
+                          description="Percentual médio de acertos do grupo analisado. Este número resume o desempenho geral em todas as questões."
+                          context={`${processedData.rawHits} acertos de ${
+                            processedData.rawHits +
+                            processedData.rawErrors +
+                            processedData.rawOmissions
+                          } interações totais`}
+                        />
+                      )}
                     </div>
 
-                    {/* --- GRADIENTES E HOVER RESTAURADOS AQUI --- */}
                     {processedData.hasRoundData && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <StatCard
                           icon={Hourglass}
                           title="Tempo Médio Total"
                           value={`${processedData.avgTimeAll.toFixed(1)}s`}
-                          subtitle={`Média da coluna T0498`}
-                          iconBg="bg-gradient-to-r from-blue-500 to-blue-300 transition-transform duration-200 hover:scale-105"
+                          subtitle={`Medido na coluna ${processedData.timeCol}`}
+                          iconBg="bg-gradient-to-r from-blue-500 to-blue-300"
                           iconColor="text-white"
                         />
                         <StatCard
                           icon={CheckCircle}
                           title="Total de Acertos"
                           value={`${processedData.percHits.toFixed(1)}%`}
-                          subtitle={`${processedData.rawHits} acertos (Q0413)`}
-                          iconBg="bg-gradient-to-r from-green-500 to-green-300 transition-transform duration-200 hover:scale-105"
+                          subtitle={`${processedData.rawHits} acertos totais`}
+                          iconBg="bg-gradient-to-r from-green-500 to-green-300"
                           iconColor="text-white"
                         />
                         <StatCard
                           icon={XCircle}
                           title="Total de Erros"
                           value={`${processedData.percErrors.toFixed(1)}%`}
-                          subtitle={`${processedData.rawErrors} erros (Q0414)`}
-                          iconBg="bg-gradient-to-r from-red-500 to-red-300 transition-transform duration-200 hover:scale-105"
+                          subtitle={`${processedData.rawErrors} erros totais`}
+                          iconBg="bg-gradient-to-r from-red-500 to-red-300"
                           iconColor="text-white"
                         />
                         <StatCard
                           icon={EyeOff}
-                          title="Total Não Respondidas"
+                          title="Não Respondidas"
                           value={`${processedData.percOmissions.toFixed(1)}%`}
-                          subtitle={`${processedData.rawOmissions} omissões (Q0415)`}
-                          iconBg="bg-gradient-to-r from-orange-500 to-orange-300 transition-transform duration-200 hover:scale-105"
+                          subtitle={`${processedData.rawOmissions} omissões`}
+                          iconBg="bg-gradient-to-r from-orange-500 to-orange-300"
                           iconColor="text-white"
                         />
                       </div>
                     )}
-                    {/* --- FIM DA RESTAURAÇÃO --- */}
 
-                    {/* Gráficos de Distribuição Tempo e Cores */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
-                      {processedData.timeDistribution.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {processedData.timeDistribution.length > 0 && (
                         <DistributionChart
                           data={processedData.timeDistribution}
                           title="Distribuição do Tempo Gasto"
-                          xAxisLabel={`Tempo (${
-                            processedData.timeCol === "TempoTotal"
-                              ? "TempoTotal"
-                              : "T0498"
-                          })`}
+                          xAxisLabel={`Tempo (${processedData.timeCol})`}
                           yAxisLabel="Nº de Jogadores"
                         />
-                      ) : (
-                        // Só mostra placeholder se timeDistribution estiver vazio
-                        // (Não depende mais de hasRoundData diretamente, pois o array estará vazio se não houver dados)
-                        <div className="placeholder-card">
-                          Dados de Tempo Indisponíveis
-                        </div>
                       )}
-                      {processedData.colorDistribution.length > 0 ? (
+                      {processedData.colorDistribution.length > 0 && (
                         <GenericPieChart
                           data={processedData.colorDistribution}
-                          title="Distribuição de Cores Escolhidas"
-                          subtitle="Preferências visuais por família de cor"
+                          title="Preferências Visuais"
+                          subtitle="Distribuição de escolhas de cores"
                         />
-                      ) : (
-                        <div className="placeholder-card">
-                          Dados de Cor Indisponíveis
-                        </div>
                       )}
                     </div>
+                  </NarrativeSection>
 
-                    {/* Gráfico Tempo Vs Performance */}
-                    {/* **FIX 5: A verificação da renderização deve ser no array, não em hasRoundData** */}
-                    {processedData.tempoVsPerformanceData.length > 0 && (
-                      <div className="mb-6">
-                        <TempoVsPerformanceChart
-                          data={processedData.tempoVsPerformanceData}
-                        />
-                      </div>
-                    )}
+                  {/* SEÇÃO 2: EVOLUÇÃO E COMPORTAMENTO */}
+                  {(processedData.tempoVsPerformanceData.length > 0 ||
+                    processedData.performanceEvolutionData.length > 0) && (
+                    <NarrativeSection
+                      id="behavior"
+                      number="2"
+                      title="Evolução e Padrões Comportamentais"
+                      subtitle="Como o desempenho evolui ao longo do tempo"
+                      summary="Análise da curva de aprendizado e relação entre velocidade e precisão."
+                    >
+                      {processedData.performanceEvolutionData.length > 0 && (
+                        <>
+                          <InsightCard
+                            type="insight"
+                            title="Curva de Aprendizado"
+                            description="Este gráfico mostra como o desempenho muda ao longo das rodadas. Linhas subindo indicam melhora progressiva. Linhas descendo podem indicar cansaço ou aumento de dificuldade. Linhas estáveis mostram consistência de performance."
+                            context="Cada linha representa um grupo diferente de participantes (clusters)"
+                          />
+                          <PerformanceEvolutionChart
+                            data={processedData.performanceEvolutionData}
+                          />
+                        </>
+                      )}
 
-                    {/* 🆕 Gráfico de Evolução de Performance */}
-                    {processedData.performanceEvolutionData.length > 0 && (
-                      <div className="mb-6">
-                        <PerformanceEvolutionChart
-                          data={processedData.performanceEvolutionData}
-                        />
-                      </div>
-                    )}
-
-                    {/* Gráfico Likert */}
-                    {processedData.likertDistribution.length > 0 ? (
-                      <LikertDistributionChart
-                        data={processedData.likertDistribution}
-                        title="Distribuição de Respostas (Ex: Emoções F07xx)"
-                        subtitle="Feedback ou estado dos jogadores"
+                      {processedData.tempoVsPerformanceData.length > 0 && (
+                        <>
+                          <InsightCard
+                            type="insight"
+                            title="Relação Entre Tempo e Acertos"
+                            description="Este gráfico mostra se participantes mais rápidos acertam mais ou menos. Cada ponto é uma pessoa. Pontos no canto superior esquerdo representam quem acertou muito gastando pouco tempo. Pontos no canto inferior direito são quem gastou muito tempo mas acertou pouco."
+                            context="Cores diferentes podem representar grupos com estratégias distintas"
+                          />
+                          <TempoVsPerformanceChart
+                            data={processedData.tempoVsPerformanceData}
+                          />
+                        </>
+                      )}
+                    </NarrativeSection>
+                  )}
+                  {processedData.funnelData.length > 0 && (
+                    <>
+                      <InsightCard
+                        type="insight"
+                        title="Funil de Conclusão"
+                        description="Este gráfico mostra quantos participantes completaram cada etapa. Cada barra representa uma fase, e o número indica quantas pessoas chegaram até ali. A diferença entre barras consecutivas revela onde houve maior desistência."
+                        context="Uma queda brusca em alguma fase específica pode indicar um ponto de dificuldade ou problema"
                       />
-                    ) : (
-                      <div className="placeholder-card">
-                        Dados Likert Indisponíveis
-                      </div>
-                    )}
-                  </section>
+                      <CompletionFunnelChart data={processedData.funnelData} />
+                    </>
+                  )}
 
-                  {/* ... (Seção Targets, Seção Predição vs Real, Seção Heatmap) ... */}
-                  <section className="bg-white rounded-3xl shadow-lg p-8">
-                    <h2 className="text-2xl font-semibold text-gray-700 mb-2 text-center flex items-center justify-center gap-2">
-                      <Target className="w-6 h-6 text-red-500" /> Os Targets: O
-                      Que Estamos Prevendo?
-                    </h2>
-                    <p className="text-gray-500 text-sm mb-6 text-center max-w-xl mx-auto">
-                      A análise foca em prever três valores-chave (Targets).
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* SEÇÃO 3: QUALIDADE PREDITIVA */}
+                  <NarrativeSection
+                    id="predictions"
+                    number="3"
+                    title="Qualidade das Predições do Modelo"
+                    subtitle="Avaliando a confiabilidade das previsões geradas"
+                    summary="Análise do R² e comparação entre valores reais e preditos para validar o modelo."
+                  >
+                    <div className="mb-6">
+                      <InsightCard
+                        type="info"
+                        title="Sobre o Score R²"
+                        description="O R² é uma métrica que mede a qualidade das previsões do modelo. Varia de 0 a 1, onde 1 significa previsões perfeitas. Valores acima de 0.8 indicam previsões muito confiáveis. Entre 0.6 e 0.8 são boas. Abaixo de 0.4 são previsões pouco confiáveis."
+                        context="Este número resume o quão bem o modelo consegue prever os resultados"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                       <TargetCard
-                        title="Target 1 (Média)"
+                        title="Target 1"
                         stats={target1Stats}
                         r2Score={results.r2_score_target1}
                       />
                       <TargetCard
-                        title="Target 2 (Média)"
+                        title="Target 2"
                         stats={target2Stats}
                         r2Score={results.r2_score_target2}
                       />
                       <TargetCard
-                        title="Target 3 (Média)"
+                        title="Target 3"
                         stats={target3Stats}
                         r2Score={results.r2_score_target3}
                       />
                     </div>
-                  </section>
-                  {processedData.scatterDataT1 && (
-                    <section>
-                      <div className="mb-6 text-center">
-                        <h2 className="text-2xl font-semibold text-gray-700 mb-2 flex items-center justify-center gap-2">
-                          <Users className="w-6 h-6 text-purple-500" /> Acurácia
-                          da Predição (vs. Real)
-                        </h2>
-                        <p className="text-gray-500 text-sm max-w-xl mx-auto">
-                          Comparando os valores reais (do CSV) com os valores
-                          preditos (pelo modelo).
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-stretch">
-                        {processedData.scatterDataT1 && (
-                          <PredictionsVsRealChart
-                            data={processedData.scatterDataT1}
-                            targetName="Target 1"
-                          />
-                        )}
-                        {processedData.scatterDataT2 && (
-                          <PredictionsVsRealChart
-                            data={processedData.scatterDataT2}
-                            targetName="Target 2"
-                          />
-                        )}
-                        {processedData.scatterDataT3 && (
-                          <PredictionsVsRealChart
-                            data={processedData.scatterDataT3}
-                            targetName="Target 3"
-                          />
-                        )}
-                      </div>
-                    </section>
-                  )}
+
+                    {processedData.scatterDataT1 && (
+                      <>
+                        <InsightCard
+                          type="insight"
+                          title="Validação: Predições vs Valores Reais"
+                          description="Estes gráficos comparam o que o modelo previu (eixo Y) com o que realmente aconteceu (eixo X). Quanto mais próximos os pontos estiverem da linha vermelha diagonal, mais precisa foi a previsão."
+                          context="Pontos espalhados longe da linha indicam previsões menos precisas"
+                        />
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {processedData.scatterDataT1 && (
+                            <PredictionsVsRealChart
+                              data={processedData.scatterDataT1}
+                              targetName="Target 1"
+                            />
+                          )}
+                          {processedData.scatterDataT2 && (
+                            <PredictionsVsRealChart
+                              data={processedData.scatterDataT2}
+                              targetName="Target 2"
+                            />
+                          )}
+                          {processedData.scatterDataT3 && (
+                            <PredictionsVsRealChart
+                              data={processedData.scatterDataT3}
+                              targetName="Target 3"
+                            />
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </NarrativeSection>
+
+                  {/* SEÇÃO 4: FEATURES IMPORTANTES */}
                   {processedData.heatmapData &&
                     processedData.heatmapData.length > 0 && (
-                      <section>
+                      <NarrativeSection
+                        id="features"
+                        number="4"
+                        title="Fatores Que Mais Influenciam as Predições"
+                        subtitle="Identificando as variáveis mais relevantes"
+                        summary="Heatmap de correlação revela quais features têm maior poder preditivo."
+                      >
+                        <InsightCard
+                          type="insight"
+                          title="Interpretando o Heatmap de Correlação"
+                          description="As cores mostram o quanto cada variável se relaciona com os resultados. Azul indica relação positiva (quando uma sobe, a outra também tende a subir). Vermelho indica relação negativa (quando uma sobe, a outra tende a cair). Cores mais intensas representam relações mais fortes."
+                          context="Variáveis com cores mais intensas têm maior influência nos resultados"
+                        />
                         <CorrelationHeatmapChart
                           data={processedData.heatmapData}
                         />
-                      </section>
+                      </NarrativeSection>
                     )}
 
-                  {/* ... (Botão Mostrar/Ocultar Detalhes e Tabela de Predições) ... */}
-                  <div className="text-center mt-10 mb-4 pt-6 border-t border-purple-200">
+                  {/* SEÇÃO 5: DISTRIBUIÇÕES COMPLEMENTARES */}
+                  {processedData.likertDistribution.length > 0 && (
+                    <NarrativeSection
+                      id="distributions"
+                      number="5"
+                      title="Distribuições Complementares"
+                      subtitle="Análise de respostas qualitativas e feedback"
+                      collapsible={true}
+                      defaultExpanded={false}
+                    >
+                      <LikertDistributionChart
+                        data={processedData.likertDistribution}
+                        title="Distribuição de Respostas Likert (F07xx)"
+                        subtitle="Feedback emocional e perceptual dos participantes"
+                      />
+                    </NarrativeSection>
+                  )}
+
+                  {/* SEÇÃO 6: RECOMENDAÇÕES */}
+                  <NarrativeSection
+                    id="key-findings"
+                    number="6"
+                    title="Principais Descobertas"
+                    subtitle="Insights-chave sobre o comportamento e performance dos jogadores"
+                    summary="Análise automática dos padrões identificados nos dados do jogo."
+                  >
+                    <KeyFindings findings={generateKeyFindings} />
+                  </NarrativeSection>
+
+                  {/* DETALHES TÉCNICOS (Colapsável) */}
+                  <div className="text-center mt-12 mb-4 pt-6 border-t-2 border-purple-200">
                     <button
                       onClick={toggleDetailsTable}
                       className="inline-flex items-center gap-2 px-6 py-3 border-2 border-purple-200 text-purple-700 rounded-xl font-semibold hover:bg-purple-50 hover:border-purple-300 transition-all shadow-sm"
                     >
                       {showDetailsTable ? (
                         <>
-                          {" "}
-                          <EyeOff className="w-5 h-5" /> Ocultar Detalhes{" "}
+                          <EyeOff className="w-5 h-5" /> Ocultar Detalhes
+                          Técnicos
                         </>
                       ) : (
                         <>
-                          {" "}
-                          <Eye className="w-5 h-5" /> Mostrar Detalhes{" "}
+                          <Eye className="w-5 h-5" /> Mostrar Detalhes Técnicos
                         </>
                       )}
                     </button>
-                    {!showDetailsTable && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Clique para ver os resultados individuais.
-                      </p>
-                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      {showDetailsTable
+                        ? "Tabela com todos os valores preditos e dados originais"
+                        : "Clique para ver os resultados individuais detalhados"}
+                    </p>
                   </div>
+
                   {showDetailsTable && (
                     <PredictionsTable predictions={displayPredictions} />
                   )}
+
+                  {/* Botão para Nova Análise no Final */}
+                  <div className="text-center py-12 border-t-2 border-gray-200">
+                    <button
+                      onClick={handleNewAnalysis}
+                      className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/40"
+                    >
+                      <Upload className="w-5 h-5 inline mr-2" /> Realizar Nova
+                      Análise
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </>
           )}
-          {/* ... (Renderização da aba Histórico) ... */}
+
           {activeTab === "history" && (
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
@@ -1076,7 +1422,7 @@ export default function Dashboard() {
                     Histórico de Análises
                   </h2>
                   <p className="text-gray-500 mt-1">
-                    Selecione uma análise anterior para carregar.
+                    Selecione uma análise anterior para revisar os insights
                   </p>
                 </div>
               </div>
@@ -1084,7 +1430,6 @@ export default function Dashboard() {
             </div>
           )}
         </main>
-        <style>{`.placeholder-card { background-color: white; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); padding: 2rem; text-align: center; color: #6b7280; display: flex; align-items: center; justify-content: center; min-height: 400px; font-style: italic; }`}</style>
       </div>
     </div>
   );
