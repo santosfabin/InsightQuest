@@ -54,7 +54,6 @@ const typeConfig = {
 };
 
 export default function Recommendations({ recommendations }: RecommendationsProps) {
-  // Ordenar por prioridade
   const sortedRecommendations = [...recommendations].sort((a, b) => {
     const priorityOrder = { high: 0, medium: 1, low: 2 };
     return priorityOrder[a.priority] - priorityOrder[b.priority];

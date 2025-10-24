@@ -1,5 +1,3 @@
-// frontend/src/components/TopBottomPerformersChart.tsx
-
 import { ResponsiveBar } from "@nivo/bar";
 
 interface TopBottomPerformersChartProps {

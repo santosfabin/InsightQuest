@@ -1,6 +1,3 @@
-// ColorPreferencesChartInteractive.tsx
-// VERSÃO PREMIUM - Com Reset e Contador
-
 import { useState } from 'react';
 import { ResponsivePie } from '@nivo/pie';
 import { RotateCcw } from 'lucide-react';
@@ -41,7 +38,6 @@ export default function ColorPreferencesChart({ data }: ColorPreferencesChartPro
 
   return (
     <div className="bg-white rounded-3xl shadow-lg p-6">
-      {/* Header com título e botão reset */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-800 mb-2">
@@ -124,7 +120,6 @@ export default function ColorPreferencesChart({ data }: ColorPreferencesChartPro
         />
       </div>
 
-      {/* Legenda Clicável Customizada */}
       <div className="mt-6">
         <div className="flex flex-wrap gap-3 justify-center">
           {data.map((item) => {
@@ -145,18 +140,15 @@ export default function ColorPreferencesChart({ data }: ColorPreferencesChartPro
                 `}
                 title={isHidden ? 'Clique para mostrar' : 'Clique para ocultar'}
               >
-                {/* Indicador de cor */}
                 <div
                   className={`w-4 h-4 rounded ${isHidden ? 'opacity-40' : ''}`}
                   style={{ backgroundColor: item.color }}
                 />
                 
-                {/* Label */}
                 <span className={`text-sm font-medium ${isHidden ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                   {item.label}
                 </span>
                 
-                {/* Valor e Percentual */}
                 <span className={`text-xs ${isHidden ? 'text-gray-300' : 'text-gray-500'}`}>
                   {!isHidden && `${item.value} (${percentage}%)`}
                   {isHidden && `(${item.value})`}
@@ -167,7 +159,6 @@ export default function ColorPreferencesChart({ data }: ColorPreferencesChartPro
         </div>
       </div>
 
-      {/* Mensagem quando todas estão ocultas */}
       {filteredData.length === 0 && (
         <div className="text-center py-8">
           <p className="text-gray-500 text-sm mb-3">

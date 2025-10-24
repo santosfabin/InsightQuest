@@ -4,7 +4,7 @@ interface Finding {
   type: 'insight' | 'pattern' | 'achievement' | 'discovery';
   title: string;
   description: string;
-  highlight?: string; // Métrica ou número destacado
+  highlight?: string;
 }
 
 interface KeyFindingsProps {

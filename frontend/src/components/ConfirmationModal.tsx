@@ -1,5 +1,3 @@
-// frontend/src/components/ConfirmationModal.tsx
-
 import { X, TriangleAlert } from "lucide-react";
 
 interface ConfirmationModalProps {
@@ -17,21 +15,19 @@ export default function ConfirmationModal({
 	onConfirm,
 	onClose
 }: ConfirmationModalProps) {
-	// Se não estiver aberto, não renderiza nada
 	if (!isOpen) {
 		return null;
 	}
 
 	const handleConfirm = () => {
 		onConfirm();
-		onClose(); // Fecha o modal após confirmar
+		onClose();
 	};
 
 	return (
-		// Overlay
 		<div
 			className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
-			onClick={onClose} // Fecha o modal ao clicar fora
+			onClick={onClose}
 		>
 			{/* Conteúdo do Modal */}
 			<div

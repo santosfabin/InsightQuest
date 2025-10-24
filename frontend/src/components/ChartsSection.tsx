@@ -13,7 +13,7 @@ interface TargetDistribution {
   target1: number;
   target2: number;
   target3: number;
-  [key: string]: string | number; // ← Adicionado para compatibilidade com Nivo Bar
+  [key: string]: string | number;
 }
 
 interface ChartsSectionProps {
@@ -22,7 +22,6 @@ interface ChartsSectionProps {
 }
 
 export default function ChartsSection({ timeSeriesData, targetDistribution }: ChartsSectionProps) {
-  // Transformar dados para o formato do Nivo Line Chart
   const lineChartData = [
     {
       id: 'Target 1',
@@ -44,7 +43,6 @@ export default function ChartsSection({ timeSeriesData, targetDistribution }: Ch
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Time Series Chart com Nivo */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
         <h3 className="text-xl font-bold text-gray-800 mb-6">Tendência Temporal</h3>
         <div style={{ height: '300px' }}>
@@ -95,7 +93,6 @@ export default function ChartsSection({ timeSeriesData, targetDistribution }: Ch
         </div>
       </div>
 
-      {/* Distribution Chart com Nivo */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
         <h3 className="text-xl font-bold text-gray-800 mb-6">Distribuição dos Targets</h3>
         <div style={{ height: '300px' }}>
