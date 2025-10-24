@@ -102,7 +102,7 @@ export default function KeyFindings({ findings }: KeyFindingsProps) {
 
       <div className="mt-6 pt-6 border-t-2 border-purple-200">
         <p className="text-center text-gray-600 text-sm">
-          💡 <strong>Observação:</strong> Estes insights foram gerados automaticamente com base nos dados analisados.
+          💡 Estes insights foram gerados automaticamente com base nos dados analisados.
         </p>
       </div>
     </div>
