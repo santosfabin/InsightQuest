@@ -30,7 +30,7 @@ export default function ExecutiveSummary({
     .filter((r): r is number => r !== null && r !== undefined)
     .reduce((sum, r) => sum + r, 0) / 3;
   
-  const modelQuality = avgR2 > 0.8 ? 'Excelente' : avgR2 > 0.6 ? 'Boa' : avgR2 > 0.4 ? 'Moderada' : 'Necessita Melhorias';
+  const modelQuality = avgR2 > 0.8 ? 'Excelente' : avgR2 > 0.6 ? 'Boa' : avgR2 > 0.4 ? 'Moderada' : 'Sem valor';
   const qualityColor = avgR2 > 0.8 ? 'text-green-600' : avgR2 > 0.6 ? 'text-blue-600' : avgR2 > 0.4 ? 'text-amber-600' : 'text-red-600';
 
   return (

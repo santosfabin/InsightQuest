@@ -300,11 +300,16 @@ class PredictionService:
                 elif isinstance(value, np.floating):
                     original_dict[key] = float(value)
 
+            codigo_acesso = None
+            if 'Código de Acesso (Original)' in row.index and pd.notna(row['Código de Acesso (Original)']):
+                codigo_acesso = str(row['Código de Acesso (Original)'])
+
             prediction_rows.append(
                 PredictionRow(
                     PREDICAO_Target1=row['PREDICAO_Target1'] if pd.notna(row['PREDICAO_Target1']) else None,
                     PREDICAO_Target2=row['PREDICAO_Target2'] if pd.notna(row['PREDICAO_Target2']) else None,
                     PREDICAO_Target3=row['PREDICAO_Target3'] if pd.notna(row['PREDICAO_Target3']) else None,
+                    codigo_acesso=codigo_acesso,
                     original_data=original_dict
                 )
             )

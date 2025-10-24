@@ -1,11 +1,11 @@
-// frontend/src/components/AnalysisCharts.tsx
-// 🆕 ADICIONADO: Gráfico "Tempo vs Performance" + "Evolução de Performance"
-
-import React from 'react'; // Import React for FC type
+import React from "react"; // Import React for FC type
 import { ResponsiveBar, type BarTooltipProps } from "@nivo/bar";
 import { ResponsivePie, type PieTooltipProps } from "@nivo/pie";
 // 👇 CORRIGIDO: Importar PointTooltipProps corretamente
-import { ResponsiveLine, type PointTooltipProps as NivoPointTooltipProps } from "@nivo/line";
+import {
+  ResponsiveLine,
+  type PointTooltipProps as NivoPointTooltipProps,
+} from "@nivo/line";
 import {
   ResponsiveScatterPlot,
   type ScatterPlotTooltipProps,
@@ -185,28 +185,65 @@ const CustomTempoVsPerformanceTooltip = ({
         minWidth: "180px",
       }}
     >
-      <p style={{ fontWeight: "bold", margin: "0 0 8px 0", color: node.color, fontSize: "14px" }}>
+      <p
+        style={{
+          fontWeight: "bold",
+          margin: "0 0 8px 0",
+          color: node.color,
+          fontSize: "14px",
+        }}
+      >
         {String(pointData.player) || `Jogador`}
       </p>
       <div style={{ color: "#333", lineHeight: "1.6" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "4px",
+          }}
+        >
           <strong>⏱️ Tempo Total:</strong>
           <span style={{ marginLeft: "8px" }}>{x.toFixed(1)}s</span>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "4px",
+          }}
+        >
           <strong>✅ Acertos:</strong>
           <span style={{ marginLeft: "8px" }}>{y}</span>
         </div>
         {pointData.target1 !== undefined && (
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", paddingTop: "6px", borderTop: "1px solid #eee" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "6px",
+              paddingTop: "6px",
+              borderTop: "1px solid #eee",
+            }}
+          >
             <strong>🎯 Target 1:</strong>
-            <span style={{ marginLeft: "8px", color: "#7c3aed" }}>{pointData.target1.toFixed(2)}</span>
+            <span style={{ marginLeft: "8px", color: "#7c3aed" }}>
+              {pointData.target1.toFixed(2)}
+            </span>
           </div>
         )}
         {pointData.cluster !== undefined && (
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "4px",
+            }}
+          >
             <strong>📊 Cluster:</strong>
-            <span style={{ marginLeft: "8px" }}>Cluster {pointData.cluster}</span>
+            <span style={{ marginLeft: "8px" }}>
+              Cluster {pointData.cluster}
+            </span>
           </div>
         )}
       </div>
@@ -215,7 +252,9 @@ const CustomTempoVsPerformanceTooltip = ({
 };
 
 // 👇 CORRIGIDO: Explicitamente tipar como React Function Component
-const CustomPerformanceEvolutionTooltip: React.FC<NivoPointTooltipProps<PerformanceEvolutionData>> = ({ point }) => {
+const CustomPerformanceEvolutionTooltip: React.FC<
+  NivoPointTooltipProps<PerformanceEvolutionData>
+> = ({ point }) => {
   // O objeto 'point' contém as informações do ponto específico que foi interagido
   return (
     <div
@@ -229,19 +268,38 @@ const CustomPerformanceEvolutionTooltip: React.FC<NivoPointTooltipProps<Performa
         minWidth: "150px",
       }}
     >
-      <p style={{ fontWeight: "bold", margin: "0 0 8px 0", color: point.seriesColor, fontSize: "14px" }}>
+      <p
+        style={{
+          fontWeight: "bold",
+          margin: "0 0 8px 0",
+          color: point.seriesColor,
+          fontSize: "14px",
+        }}
+      >
         {point.seriesId} {/* Corrigido para seriesId */}
       </p>
       <div style={{ color: "#333", lineHeight: "1.6" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "4px",
+          }}
+        >
           <strong>Rodada:</strong>
           {/* Acessar data.xFormatted para o valor formatado do eixo x */}
           <span style={{ marginLeft: "8px" }}>{point.data.xFormatted}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <strong>Taxa de Acerto:</strong>
-          <span style={{ marginLeft: "8px", color: point.seriesColor, fontWeight: "bold" }}>
-             {/* Acessar data.yFormatted para o valor formatado do eixo y */}
+          <span
+            style={{
+              marginLeft: "8px",
+              color: point.seriesColor,
+              fontWeight: "bold",
+            }}
+          >
+            {/* Acessar data.yFormatted para o valor formatado do eixo y */}
             {Number(point.data.yFormatted).toFixed(1)}%
           </span>
         </div>
@@ -249,7 +307,6 @@ const CustomPerformanceEvolutionTooltip: React.FC<NivoPointTooltipProps<Performa
     </div>
   );
 };
-
 
 const DiagonalLineLayer = ({
   xScale,
@@ -650,11 +707,7 @@ export function PredictionsVsRealChart({
   );
 }
 
-export function TempoVsPerformanceChart({
-  data,
-}: {
-  data: ScatterData[];
-}) {
+export function TempoVsPerformanceChart({ data }: { data: ScatterData[] }) {
   return (
     <div className="bg-white rounded-3xl shadow-lg p-8 flex flex-col h-[550px]">
       <div>
@@ -665,7 +718,8 @@ export function TempoVsPerformanceChart({
           Relação entre tempo gasto e quantidade de acertos
         </p>
         <p className="text-xs text-gray-400 mb-4">
-          📊 Dados: <strong>T0498</strong> (eixo X) vs <strong>Q0413</strong> (Total de Acertos - eixo Y), colorido por Cluster
+          📊 Dados: <strong>T0498</strong> (eixo X) vs <strong>Q0413</strong>{" "}
+          (Total de Acertos - eixo Y), colorido por Cluster
         </p>
       </div>
       <div className="flex-grow">
@@ -677,13 +731,7 @@ export function TempoVsPerformanceChart({
           colors={{ scheme: "category10" }}
           nodeSize={11}
           blendMode="normal"
-          layers={[
-            "grid",
-            "axes",
-            "nodes",
-            "mesh",
-            "legends",
-          ]}
+          layers={["grid", "axes", "nodes", "mesh", "legends"]}
           axisBottom={{
             tickSize: 5,
             tickPadding: 5,
@@ -739,7 +787,7 @@ export function PerformanceEvolutionChart({
           Como a taxa de acerto (%) evolui ao longo das rodadas
         </p>
         <p className="text-xs text-gray-400 mb-4">
-          📊 Dados: Taxa de acerto para <strong>Q0301</strong> (R1), <strong>Q0302</strong> (R2), <strong>Q0303</strong> (R3) e <strong>Q0413</strong> (Total) - separado por Cluster
+          📊 Dados: Taxa de acerto nas rodadas 1, 2, 3 e total geral - separado por grupo
         </p>
       </div>
       <div className="flex-grow">
@@ -818,7 +866,6 @@ export function PerformanceEvolutionChart({
     </div>
   );
 }
-
 
 // ===== COMPONENTES DE GRÁFICO (MANTIDOS) =====
 export function GenericPieChart({
@@ -1089,4 +1136,3 @@ export function PerformanceByClusterChart({
     </div>
   );
 }
-

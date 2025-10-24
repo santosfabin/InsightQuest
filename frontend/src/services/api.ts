@@ -8,6 +8,7 @@ export interface ApiPredictionRow {
 	PREDICAO_Target1: number | null;
 	PREDICAO_Target2: number | null;
 	PREDICAO_Target3: number | null;
+	codigo_acesso?: string | null;
 	original_data: { [key: string]: unknown };
 }
 
