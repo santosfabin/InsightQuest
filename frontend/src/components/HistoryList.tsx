@@ -1,11 +1,11 @@
-// frontend/src/components/HistoryList.tsx
-
 import { useState, useEffect } from "react";
 import {
 	FileText,
 	Calendar,
 	ArrowRight,
-	Trash2
+	Trash2,
+	Info,
+	Loader2
 } from "lucide-react";
 import {
 	getHistoryEntries,
@@ -13,7 +13,7 @@ import {
 	clearHistory,
 	type HistoryEntry
 } from "../services/db";
-import ConfirmationModal from "./ConfirmationModal.tsx"; // Corrigido com .tsx
+import ConfirmationModal from "./ConfirmationModal.tsx";
 
 interface HistoryListProps {
 	onLoadEntry: (entry: HistoryEntry) => void;
@@ -84,11 +84,29 @@ export default function HistoryList({ onLoadEntry }: HistoryListProps) {
 	};
 
 	if (isLoading) {
-		// ... (código de loading sem alteração)
+		return (
+			<div className="flex justify-center items-center py-20">
+				<Loader2 className="w-10 h-10 text-purple-600 animate-spin" />
+				<p className="ml-4 text-gray-600 text-lg">
+					Carregando histórico...
+				</p>
+			</div>
+		);
 	}
 
 	if (entries.length === 0) {
-		// ... (código de histórico vazio sem alteração)
+		return (
+			<div className="bg-white rounded-3xl shadow-lg p-12 text-center">
+				<Info className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+				<h3 className="text-xl font-semibold text-gray-800">
+					Seu histórico está vazio
+				</h3>
+				<p className="text-gray-500 mt-2">
+					Quando você realizar uma nova análise, ela aparecerá aqui
+					para consulta futura.
+				</p>
+			</div>
+		);
 	}
 
 	return (
@@ -106,7 +124,6 @@ export default function HistoryList({ onLoadEntry }: HistoryListProps) {
 				</div>
 
 				{entries.map(entry => (
-					// AQUI ESTÁ A CORREÇÃO PRINCIPAL
 					<div
 						key={entry.id}
 						className="bg-white rounded-2xl shadow-md p-6 transition-all hover:shadow-xl hover:ring-2 hover:ring-purple-500"
