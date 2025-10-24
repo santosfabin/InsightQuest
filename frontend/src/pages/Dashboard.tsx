@@ -1129,7 +1129,7 @@ export default function Dashboard() {
 	};
 
 	return (
-		<div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+		<div className="flex bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
 			<Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 			<div className="flex-grow">
 				<main className="max-w-7xl mx-auto px-8 py-8">
@@ -1188,386 +1188,431 @@ export default function Dashboard() {
 									}}
 								/>
 							) : results ? (
-								<div className="space-y-12">
-									{/* RESUMO EXECUTIVO */}
-									<ExecutiveSummary
-										fileName={
-											file?.name ?? "Arquivo Desconhecido"
-										}
-										totalRows={results.total_rows}
-										processedRows={processedSuccessfully}
-										avgTarget1={processedData.avgTarget1}
-										avgTarget2={processedData.avgTarget2}
-										avgTarget3={processedData.avgTarget3}
-										r2_target1={results.r2_score_target1}
-										r2_target2={results.r2_score_target2}
-										r2_target3={results.r2_score_target3}
-										keyInsights={generateInsights}
-									/>
+								<>
+									<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+										<div>
+											<h2 className="text-2xl font-bold text-gray-800">
+												Resultados da Análise
+											</h2>
+											<p className="text-gray-500 mt-1">
+												Análise do arquivo:{" "}
+												<span className="font-medium text-gray-700">
+													{file?.name ??
+														"Desconhecido"}
+												</span>
+											</p>
+										</div>
+										<button
+											onClick={handleNewAnalysis}
+											className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-600 transition-all shadow-md mt-4 sm:mt-0 flex-shrink-0"
+										>
+											<Upload className="w-5 h-5 inline mr-2" />
+											Realizar Nova Análise
+										</button>
+									</div>
+									<div className="space-y-12"></div>
+									<div className="space-y-12">
+										{/* RESUMO EXECUTIVO */}
+										<ExecutiveSummary
+											fileName={
+												file?.name ??
+												"Arquivo Desconhecido"
+											}
+											totalRows={results.total_rows}
+											processedRows={
+												processedSuccessfully
+											}
+											avgTarget1={
+												processedData.avgTarget1
+											}
+											avgTarget2={
+												processedData.avgTarget2
+											}
+											avgTarget3={
+												processedData.avgTarget3
+											}
+											r2_target1={
+												results.r2_score_target1
+											}
+											r2_target2={
+												results.r2_score_target2
+											}
+											r2_target3={
+												results.r2_score_target3
+											}
+											keyInsights={generateInsights}
+										/>
 
-									{/* SEÇÃO 1: CONTEXTO DOS DADOS */}
-									<NarrativeSection
-										id="context"
-										number="1"
-										title="Contexto dos Dados de Entrada"
-										subtitle="Entendendo o perfil do dataset analisado"
-										summary={`Analisamos ${processedSuccessfully} registros com múltiplas variáveis comportamentais e de performance.`}
-									>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-											<InsightCard
-												type="info"
-												title="Volume de Dados Analisados"
-												metric={`${processedSuccessfully} registros`}
-												description="Quantidade de linhas que foram processadas e analisadas pelo sistema. Quanto mais dados, mais confiáveis tendem a ser os resultados estatísticos."
-												context={`${(
-													(processedSuccessfully /
-														results.total_rows) *
-													100
-												).toFixed(
-													1
-												)}% do total foi processado com sucesso`}
-											/>
+										{/* SEÇÃO 1: CONTEXTO DOS DADOS */}
+										<NarrativeSection
+											id="context"
+											number="1"
+											title="Contexto dos Dados de Entrada"
+											subtitle="Entendendo o perfil do dataset analisado"
+											summary={`Analisamos ${processedSuccessfully} registros com múltiplas variáveis comportamentais e de performance.`}
+										>
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+												<InsightCard
+													type="info"
+													title="Volume de Dados Analisados"
+													metric={`${processedSuccessfully} registros`}
+													description="Quantidade de linhas que foram processadas e analisadas pelo sistema. Quanto mais dados, mais confiáveis tendem a ser os resultados estatísticos."
+													context={`${(
+														(processedSuccessfully /
+															results.total_rows) *
+														100
+													).toFixed(
+														1
+													)}% do total foi processado com sucesso`}
+												/>
+
+												{processedData.hasRoundData && (
+													<InsightCard
+														type={
+															processedData.percHits >
+															70
+																? "success"
+																: processedData.percHits >
+																  50
+																? "info"
+																: "warning"
+														}
+														title="Performance Geral do Grupo"
+														metric={`${processedData.percHits.toFixed(
+															1
+														)}%`}
+														description="Percentual médio de acertos do grupo analisado. Este número resume o desempenho geral em todas as questões."
+														context={`${
+															processedData.rawHits
+														} acertos de ${
+															processedData.rawHits +
+															processedData.rawErrors +
+															processedData.rawOmissions
+														} interações totais`}
+													/>
+												)}
+											</div>
 
 											{processedData.hasRoundData && (
-												<InsightCard
-													type={
-														processedData.percHits >
-														70
-															? "success"
-															: processedData.percHits >
-															  50
-															? "info"
-															: "warning"
-													}
-													title="Performance Geral do Grupo"
-													metric={`${processedData.percHits.toFixed(
-														1
-													)}%`}
-													description="Percentual médio de acertos do grupo analisado. Este número resume o desempenho geral em todas as questões."
-													context={`${
-														processedData.rawHits
-													} acertos de ${
-														processedData.rawHits +
-														processedData.rawErrors +
-														processedData.rawOmissions
-													} interações totais`}
-												/>
+												<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+													<StatCard
+														icon={Hourglass}
+														title="Tempo Médio Total"
+														value={`${processedData.avgTimeAll.toFixed(
+															1
+														)}s`}
+														subtitle={`Medido na coluna ${processedData.timeCol}`}
+														iconBg="bg-gradient-to-r from-blue-500 to-blue-300"
+														iconColor="text-white"
+													/>
+													<StatCard
+														icon={CheckCircle}
+														title="Total de Acertos"
+														value={`${processedData.percHits.toFixed(
+															1
+														)}%`}
+														subtitle={`${processedData.rawHits} acertos totais`}
+														iconBg="bg-gradient-to-r from-green-500 to-green-300"
+														iconColor="text-white"
+													/>
+													<StatCard
+														icon={XCircle}
+														title="Total de Erros"
+														value={`${processedData.percErrors.toFixed(
+															1
+														)}%`}
+														subtitle={`${processedData.rawErrors} erros totais`}
+														iconBg="bg-gradient-to-r from-red-500 to-red-300"
+														iconColor="text-white"
+													/>
+													<StatCard
+														icon={EyeOff}
+														title="Não Respondidas"
+														value={`${processedData.percOmissions.toFixed(
+															1
+														)}%`}
+														subtitle={`${processedData.rawOmissions} omissões`}
+														iconBg="bg-gradient-to-r from-orange-500 to-orange-300"
+														iconColor="text-white"
+													/>
+												</div>
 											)}
-										</div>
 
-										{processedData.hasRoundData && (
-											<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-												<StatCard
-													icon={Hourglass}
-													title="Tempo Médio Total"
-													value={`${processedData.avgTimeAll.toFixed(
-														1
-													)}s`}
-													subtitle={`Medido na coluna ${processedData.timeCol}`}
-													iconBg="bg-gradient-to-r from-blue-500 to-blue-300"
-													iconColor="text-white"
-												/>
-												<StatCard
-													icon={CheckCircle}
-													title="Total de Acertos"
-													value={`${processedData.percHits.toFixed(
-														1
-													)}%`}
-													subtitle={`${processedData.rawHits} acertos totais`}
-													iconBg="bg-gradient-to-r from-green-500 to-green-300"
-													iconColor="text-white"
-												/>
-												<StatCard
-													icon={XCircle}
-													title="Total de Erros"
-													value={`${processedData.percErrors.toFixed(
-														1
-													)}%`}
-													subtitle={`${processedData.rawErrors} erros totais`}
-													iconBg="bg-gradient-to-r from-red-500 to-red-300"
-													iconColor="text-white"
-												/>
-												<StatCard
-													icon={EyeOff}
-													title="Não Respondidas"
-													value={`${processedData.percOmissions.toFixed(
-														1
-													)}%`}
-													subtitle={`${processedData.rawOmissions} omissões`}
-													iconBg="bg-gradient-to-r from-orange-500 to-orange-300"
-													iconColor="text-white"
-												/>
+											<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+												{processedData.timeDistribution
+													.length > 0 && (
+													<DistributionChart
+														data={
+															processedData.timeDistribution
+														}
+														title="Distribuição do Tempo Gasto"
+														xAxisLabel={`Tempo (${processedData.timeCol})`}
+														yAxisLabel="Nº de Jogadores"
+													/>
+												)}
+												{processedData.colorDistribution
+													.length > 0 && (
+													<GenericPieChart
+														data={
+															processedData.colorDistribution
+														}
+														title="Preferências Visuais"
+														subtitle="Distribuição de escolhas de cores"
+													/>
+												)}
 											</div>
-										)}
-
-										<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-											{processedData.timeDistribution
-												.length > 0 && (
-												<DistributionChart
-													data={
-														processedData.timeDistribution
-													}
-													title="Distribuição do Tempo Gasto"
-													xAxisLabel={`Tempo (${processedData.timeCol})`}
-													yAxisLabel="Nº de Jogadores"
-												/>
-											)}
-											{processedData.colorDistribution
-												.length > 0 && (
-												<GenericPieChart
-													data={
-														processedData.colorDistribution
-													}
-													title="Preferências Visuais"
-													subtitle="Distribuição de escolhas de cores"
-												/>
-											)}
-										</div>
-									</NarrativeSection>
-
-									{/* SEÇÃO 2: EVOLUÇÃO E COMPORTAMENTO */}
-									{(processedData.tempoVsPerformanceData
-										.length > 0 ||
-										processedData.performanceEvolutionData
-											.length > 0) && (
-										<NarrativeSection
-											id="behavior"
-											number="2"
-											title="Evolução e Padrões Comportamentais"
-											subtitle="Como o desempenho evolui ao longo do tempo"
-											summary="Análise da curva de aprendizado e relação entre velocidade e precisão."
-										>
-											{processedData
-												.performanceEvolutionData
-												.length > 0 && (
-												<>
-													<InsightCard
-														type="insight"
-														title="Curva de Aprendizado"
-														description="Este gráfico mostra como o desempenho muda ao longo das rodadas. Linhas subindo indicam melhora progressiva. Linhas descendo podem indicar cansaço ou aumento de dificuldade. Linhas estáveis mostram consistência de performance."
-														context="Cada linha representa um grupo diferente de participantes (clusters)"
-													/>
-													<PerformanceEvolutionChart
-														data={
-															processedData.performanceEvolutionData
-														}
-													/>
-												</>
-											)}
-
-											{processedData
-												.tempoVsPerformanceData.length >
-												0 && (
-												<>
-													<InsightCard
-														type="insight"
-														title="Relação Entre Tempo e Acertos"
-														description="Este gráfico mostra se participantes mais rápidos acertam mais ou menos. Cada ponto é uma pessoa. Pontos no canto superior esquerdo representam quem acertou muito gastando pouco tempo. Pontos no canto inferior direito são quem gastou muito tempo mas acertou pouco."
-														context="Cores diferentes podem representar grupos com estratégias distintas"
-													/>
-													<TempoVsPerformanceChart
-														data={
-															processedData.tempoVsPerformanceData
-														}
-													/>
-												</>
-											)}
 										</NarrativeSection>
-									)}
-									{processedData.funnelData.length > 0 && (
-										<>
-											<InsightCard
-												type="insight"
-												title="Funil de Conclusão"
-												description="Este gráfico mostra quantos participantes completaram cada etapa. Cada barra representa uma fase, e o número indica quantas pessoas chegaram até ali. A diferença entre barras consecutivas revela onde houve maior desistência."
-												context="Uma queda brusca em alguma fase específica pode indicar um ponto de dificuldade ou problema"
-											/>
-											<CompletionFunnelChart
-												data={processedData.funnelData}
-											/>
-										</>
-									)}
 
-									{/* SEÇÃO 3: QUALIDADE PREDITIVA */}
-									<NarrativeSection
-										id="predictions"
-										number="3"
-										title="Qualidade das Predições do Modelo"
-										subtitle="Avaliando a confiabilidade das previsões geradas"
-										summary="Análise do R² e comparação entre valores reais e preditos para validar o modelo."
-									>
-										<div className="mb-6">
-											<InsightCard
-												type="info"
-												title="Sobre o Score R²"
-												description="O R² é uma métrica que mede a qualidade das previsões do modelo. Varia de 0 a 1, onde 1 significa previsões perfeitas. Valores acima de 0.8 indicam previsões muito confiáveis. Entre 0.6 e 0.8 são boas. Abaixo de 0.4 são previsões pouco confiáveis."
-												context="Este número resume o quão bem o modelo consegue prever os resultados"
-											/>
-										</div>
+										{/* SEÇÃO 2: EVOLUÇÃO E COMPORTAMENTO */}
+										{(processedData.tempoVsPerformanceData
+											.length > 0 ||
+											processedData
+												.performanceEvolutionData
+												.length > 0) && (
+											<NarrativeSection
+												id="behavior"
+												number="2"
+												title="Evolução e Padrões Comportamentais"
+												subtitle="Como o desempenho evolui ao longo do tempo"
+												summary="Análise da curva de aprendizado e relação entre velocidade e precisão."
+											>
+												{processedData
+													.performanceEvolutionData
+													.length > 0 && (
+													<>
+														<InsightCard
+															type="insight"
+															title="Curva de Aprendizado"
+															description="Este gráfico mostra como o desempenho muda ao longo das rodadas. Linhas subindo indicam melhora progressiva. Linhas descendo podem indicar cansaço ou aumento de dificuldade. Linhas estáveis mostram consistência de performance."
+															context="Cada linha representa um grupo diferente de participantes (clusters)"
+														/>
+														<PerformanceEvolutionChart
+															data={
+																processedData.performanceEvolutionData
+															}
+														/>
+													</>
+												)}
 
-										<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-											<TargetCard
-												title="Target 1"
-												stats={target1Stats}
-												r2Score={
-													results.r2_score_target1
-												}
-											/>
-											<TargetCard
-												title="Target 2"
-												stats={target2Stats}
-												r2Score={
-													results.r2_score_target2
-												}
-											/>
-											<TargetCard
-												title="Target 3"
-												stats={target3Stats}
-												r2Score={
-													results.r2_score_target3
-												}
-											/>
-										</div>
-
-										{processedData.scatterDataT1 && (
+												{processedData
+													.tempoVsPerformanceData
+													.length > 0 && (
+													<>
+														<InsightCard
+															type="insight"
+															title="Relação Entre Tempo e Acertos"
+															description="Este gráfico mostra se participantes mais rápidos acertam mais ou menos. Cada ponto é uma pessoa. Pontos no canto superior esquerdo representam quem acertou muito gastando pouco tempo. Pontos no canto inferior direito são quem gastou muito tempo mas acertou pouco."
+															context="Cores diferentes podem representar grupos com estratégias distintas"
+														/>
+														<TempoVsPerformanceChart
+															data={
+																processedData.tempoVsPerformanceData
+															}
+														/>
+													</>
+												)}
+											</NarrativeSection>
+										)}
+										{processedData.funnelData.length >
+											0 && (
 											<>
 												<InsightCard
 													type="insight"
-													title="Validação: Predições vs Valores Reais"
-													description="Estes gráficos comparam o que o modelo previu (eixo Y) com o que realmente aconteceu (eixo X). Quanto mais próximos os pontos estiverem da linha vermelha diagonal, mais precisa foi a previsão."
-													context="Pontos espalhados longe da linha indicam previsões menos precisas"
+													title="Funil de Conclusão"
+													description="Este gráfico mostra quantos participantes completaram cada etapa. Cada barra representa uma fase, e o número indica quantas pessoas chegaram até ali. A diferença entre barras consecutivas revela onde houve maior desistência."
+													context="Uma queda brusca em alguma fase específica pode indicar um ponto de dificuldade ou problema"
 												/>
-												<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-													{processedData.scatterDataT1 && (
-														<PredictionsVsRealChart
-															data={
-																processedData.scatterDataT1
-															}
-															targetName="Target 1"
-														/>
-													)}
-													{processedData.scatterDataT2 && (
-														<PredictionsVsRealChart
-															data={
-																processedData.scatterDataT2
-															}
-															targetName="Target 2"
-														/>
-													)}
-													{processedData.scatterDataT3 && (
-														<PredictionsVsRealChart
-															data={
-																processedData.scatterDataT3
-															}
-															targetName="Target 3"
-														/>
-													)}
-												</div>
+												<CompletionFunnelChart
+													data={
+														processedData.funnelData
+													}
+												/>
 											</>
 										)}
-									</NarrativeSection>
 
-									{/* SEÇÃO 4: FEATURES IMPORTANTES */}
-									{processedData.heatmapData &&
-										processedData.heatmapData.length >
-											0 && (
-											<NarrativeSection
-												id="features"
-												number="4"
-												title="Fatores Que Mais Influenciam as Predições"
-												subtitle="Identificando as variáveis mais relevantes"
-												summary="Heatmap de correlação revela quais features têm maior poder preditivo."
-											>
+										{/* SEÇÃO 3: QUALIDADE PREDITIVA */}
+										<NarrativeSection
+											id="predictions"
+											number="3"
+											title="Qualidade das Predições do Modelo"
+											subtitle="Avaliando a confiabilidade das previsões geradas"
+											summary="Análise do R² e comparação entre valores reais e preditos para validar o modelo."
+										>
+											<div className="mb-6">
 												<InsightCard
-													type="insight"
-													title="Interpretando o Heatmap de Correlação"
-													description="As cores mostram o quanto cada variável se relaciona com os resultados. Azul indica relação positiva (quando uma sobe, a outra também tende a subir). Vermelho indica relação negativa (quando uma sobe, a outra tende a cair). Cores mais intensas representam relações mais fortes."
-													context="Variáveis com cores mais intensas têm maior influência nos resultados"
+													type="info"
+													title="Sobre o Score R²"
+													description="O R² é uma métrica que mede a qualidade das previsões do modelo. Varia de 0 a 1, onde 1 significa previsões perfeitas. Valores acima de 0.8 indicam previsões muito confiáveis. Entre 0.6 e 0.8 são boas. Abaixo de 0.4 são previsões pouco confiáveis."
+													context="Este número resume o quão bem o modelo consegue prever os resultados"
 												/>
-												<CorrelationHeatmapChart
-													data={
-														processedData.heatmapData
+											</div>
+
+											<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+												<TargetCard
+													title="Target 1"
+													stats={target1Stats}
+													r2Score={
+														results.r2_score_target1
 													}
+												/>
+												<TargetCard
+													title="Target 2"
+													stats={target2Stats}
+													r2Score={
+														results.r2_score_target2
+													}
+												/>
+												<TargetCard
+													title="Target 3"
+													stats={target3Stats}
+													r2Score={
+														results.r2_score_target3
+													}
+												/>
+											</div>
+
+											{processedData.scatterDataT1 && (
+												<>
+													<InsightCard
+														type="insight"
+														title="Validação: Predições vs Valores Reais"
+														description="Estes gráficos comparam o que o modelo previu (eixo Y) com o que realmente aconteceu (eixo X). Quanto mais próximos os pontos estiverem da linha vermelha diagonal, mais precisa foi a previsão."
+														context="Pontos espalhados longe da linha indicam previsões menos precisas"
+													/>
+													<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+														{processedData.scatterDataT1 && (
+															<PredictionsVsRealChart
+																data={
+																	processedData.scatterDataT1
+																}
+																targetName="Target 1"
+															/>
+														)}
+														{processedData.scatterDataT2 && (
+															<PredictionsVsRealChart
+																data={
+																	processedData.scatterDataT2
+																}
+																targetName="Target 2"
+															/>
+														)}
+														{processedData.scatterDataT3 && (
+															<PredictionsVsRealChart
+																data={
+																	processedData.scatterDataT3
+																}
+																targetName="Target 3"
+															/>
+														)}
+													</div>
+												</>
+											)}
+										</NarrativeSection>
+
+										{/* SEÇÃO 4: FEATURES IMPORTANTES */}
+										{processedData.heatmapData &&
+											processedData.heatmapData.length >
+												0 && (
+												<NarrativeSection
+													id="features"
+													number="4"
+													title="Fatores Que Mais Influenciam as Predições"
+													subtitle="Identificando as variáveis mais relevantes"
+													summary="Heatmap de correlação revela quais features têm maior poder preditivo."
+												>
+													<InsightCard
+														type="insight"
+														title="Interpretando o Heatmap de Correlação"
+														description="As cores mostram o quanto cada variável se relaciona com os resultados. Azul indica relação positiva (quando uma sobe, a outra também tende a subir). Vermelho indica relação negativa (quando uma sobe, a outra tende a cair). Cores mais intensas representam relações mais fortes."
+														context="Variáveis com cores mais intensas têm maior influência nos resultados"
+													/>
+													<CorrelationHeatmapChart
+														data={
+															processedData.heatmapData
+														}
+													/>
+												</NarrativeSection>
+											)}
+
+										{/* SEÇÃO 5: DISTRIBUIÇÕES COMPLEMENTARES */}
+										{processedData.likertDistribution
+											.length > 0 && (
+											<NarrativeSection
+												id="distributions"
+												number="5"
+												title="Distribuições Complementares"
+												subtitle="Análise de respostas qualitativas e feedback"
+												collapsible={true}
+												defaultExpanded={false}
+											>
+												<LikertDistributionChart
+													data={
+														processedData.likertDistribution
+													}
+													title="Distribuição de Respostas Likert (F07xx)"
+													subtitle="Feedback emocional e perceptual dos participantes"
 												/>
 											</NarrativeSection>
 										)}
 
-									{/* SEÇÃO 5: DISTRIBUIÇÕES COMPLEMENTARES */}
-									{processedData.likertDistribution.length >
-										0 && (
+										{/* SEÇÃO 6: RECOMENDAÇÕES */}
 										<NarrativeSection
-											id="distributions"
-											number="5"
-											title="Distribuições Complementares"
-											subtitle="Análise de respostas qualitativas e feedback"
-											collapsible={true}
-											defaultExpanded={false}
+											id="key-findings"
+											number="6"
+											title="Principais Descobertas"
+											subtitle="Insights-chave sobre o comportamento e performance dos jogadores"
+											summary="Análise automática dos padrões identificados nos dados do jogo."
 										>
-											<LikertDistributionChart
-												data={
-													processedData.likertDistribution
-												}
-												title="Distribuição de Respostas Likert (F07xx)"
-												subtitle="Feedback emocional e perceptual dos participantes"
+											<KeyFindings
+												findings={generateKeyFindings}
 											/>
 										</NarrativeSection>
-									)}
 
-									{/* SEÇÃO 6: RECOMENDAÇÕES */}
-									<NarrativeSection
-										id="key-findings"
-										number="6"
-										title="Principais Descobertas"
-										subtitle="Insights-chave sobre o comportamento e performance dos jogadores"
-										summary="Análise automática dos padrões identificados nos dados do jogo."
-									>
-										<KeyFindings
-											findings={generateKeyFindings}
-										/>
-									</NarrativeSection>
+										{/* DETALHES TÉCNICOS (Colapsável) */}
+										<div className="text-center mt-12 mb-4 pt-6 border-t-2 border-purple-200">
+											<button
+												onClick={toggleDetailsTable}
+												className="inline-flex items-center gap-2 px-6 py-3 border-2 border-purple-200 text-purple-700 rounded-xl font-semibold hover:bg-purple-50 hover:border-purple-300 transition-all shadow-sm"
+											>
+												{showDetailsTable ? (
+													<>
+														<EyeOff className="w-5 h-5" />{" "}
+														Ocultar Detalhes
+														Técnicos
+													</>
+												) : (
+													<>
+														<Eye className="w-5 h-5" />{" "}
+														Mostrar Detalhes
+														Técnicos
+													</>
+												)}
+											</button>
+											<p className="text-xs text-gray-500 mt-2">
+												{showDetailsTable
+													? "Tabela com todos os valores preditos e dados originais"
+													: "Clique para ver os resultados individuais detalhados"}
+											</p>
+										</div>
 
-									{/* DETALHES TÉCNICOS (Colapsável) */}
-									<div className="text-center mt-12 mb-4 pt-6 border-t-2 border-purple-200">
-										<button
-											onClick={toggleDetailsTable}
-											className="inline-flex items-center gap-2 px-6 py-3 border-2 border-purple-200 text-purple-700 rounded-xl font-semibold hover:bg-purple-50 hover:border-purple-300 transition-all shadow-sm"
-										>
-											{showDetailsTable ? (
-												<>
-													<EyeOff className="w-5 h-5" />{" "}
-													Ocultar Detalhes Técnicos
-												</>
-											) : (
-												<>
-													<Eye className="w-5 h-5" />{" "}
-													Mostrar Detalhes Técnicos
-												</>
-											)}
-										</button>
-										<p className="text-xs text-gray-500 mt-2">
-											{showDetailsTable
-												? "Tabela com todos os valores preditos e dados originais"
-												: "Clique para ver os resultados individuais detalhados"}
-										</p>
+										{showDetailsTable && (
+											<PredictionsTable
+												predictions={displayPredictions}
+											/>
+										)}
+
+										{/* Botão para Nova Análise no Final */}
+										<div className="text-center py-12 border-t-2 border-gray-200">
+											<button
+												onClick={handleNewAnalysis}
+												className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/40"
+											>
+												<Upload className="w-5 h-5 inline mr-2" />{" "}
+												Realizar Nova Análise
+											</button>
+										</div>
 									</div>
-
-									{showDetailsTable && (
-										<PredictionsTable
-											predictions={displayPredictions}
-										/>
-									)}
-
-									{/* Botão para Nova Análise no Final */}
-									<div className="text-center py-12 border-t-2 border-gray-200">
-										<button
-											onClick={handleNewAnalysis}
-											className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/40"
-										>
-											<Upload className="w-5 h-5 inline mr-2" />{" "}
-											Realizar Nova Análise
-										</button>
-									</div>
-								</div>
+								</>
 							) : null}
 						</>
 					)}
